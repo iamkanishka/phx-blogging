@@ -17,7 +17,10 @@ defmodule Blogging.Application do
       # Start a worker by calling: Blogging.Worker.start_link(arg)
       # {Blogging.Worker, arg},
       # Start to serve requests, typically the last entry
-      BloggingWeb.Endpoint
+      BloggingWeb.Endpoint,
+      Blogging.Presence,
+      {Registry, keys: :unique, name: Blogging.PostRegistry},
+      Blogging.Tracker.PostSupervisor
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
