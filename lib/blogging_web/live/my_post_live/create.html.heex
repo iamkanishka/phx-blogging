@@ -1,0 +1,29 @@
+    <div class="max-w-2xl mx-auto py-10">
+      <% f = to_form(@changeset, as: :post) %>
+      <.simple_form
+        for={f}
+        id="post-form"
+        phx-submit="save"
+        phx-change="validate"
+      
+        class="space-y-6"
+      >
+        <.input field={f[:title]} type="text" label="Title" />
+       <div>
+  <label class="block text-sm font-medium mb-1">Content</label>
+        <div id="create_post" phx-update="ignore">
+         <div
+          id="quill-editor"
+         phx-hook="quillhook"
+          data-content={@html_content}
+          class="bg-white h-64 p-2 border rounded overflow-y-auto"
+          ></div>
+         </div>
+      </div>
+
+        <input type="hidden" name="post[html_content]" id="quill_html_content" value={@html_content} />
+        <:actions>
+          <.button type="submit">Create Post</.button>
+        </:actions>
+      </.simple_form>
+    </div>
