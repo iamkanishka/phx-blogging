@@ -1,0 +1,43 @@
+<div class="container mx-auto px-4 py-8">
+  <.header>
+    Blog Posts
+    <:actions>
+      <.link patch={~p"/posts/new"} class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        New Post
+      </.link>
+    </:actions>
+  </.header>
+
+  <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-8">
+    <%= for post <- @posts do %>
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="p-6">
+          <h3 class="text-xl font-semibold text-gray-800 mb-2">
+            <%= post.title %>
+          </h3>
+          <p class="text-gray-600 mb-4">
+            <%= raw post.content |> String.slice(0, 150) %>...
+          </p>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-500">
+              <%= post.author %> • <%= post.published_at %>
+            </span>
+            <div class="flex space-x-2">
+              <.link patch={~p"/posts/#{post}/edit"} class="text-blue-600 hover:text-blue-800">
+                Edit
+              </.link>
+              <.link
+                phx-click={JS.push("delete", value: %{id: post.id})}
+                data-confirm="Are you sure?"
+                class="text-red-600 hover:text-red-800"
+              >
+                Delete
+              </.link>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
