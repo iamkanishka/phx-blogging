@@ -1,12 +1,13 @@
-
 defmodule Blogging.Contents.Comments.Comment do
   use Ecto.Schema
   import Ecto.Changeset
 
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @derive {Phoenix.Param, key: :id}
+  @foreign_key_type :binary_id
   schema "comments" do
     field :content, :string
     field :depth, :integer, default: 0
-    # field :path, :ltree
 
     belongs_to :user, Blogging.Accounts.User
     belongs_to :post, Blogging.Contents.Post
