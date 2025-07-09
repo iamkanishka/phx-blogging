@@ -4,6 +4,10 @@ defmodule Blogging.Notifications.Notification do
 
   @types [:comment, :reaction, :mention]
 
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @derive {Phoenix.Param, key: :id}
+  @foreign_key_type :binary_id
+
   schema "notifications" do
     field :type, Ecto.Enum, values: @types
     field :data, :map
