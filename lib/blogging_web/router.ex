@@ -20,7 +20,10 @@ defmodule BloggingWeb.Router do
   scope "/", BloggingWeb do
     pipe_through :browser
 
-    get "/", PageController, :home
+    live "/", PostLive.Index, :index
+    live "/posts/new", PostLive.Create, :new
+    live "/posts/edit/:id", PostLive.Create, :edit
+
   end
 
   # Other scopes may use custom stacks.
