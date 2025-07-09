@@ -3,8 +3,9 @@ defmodule Blogging.Repo.Migrations.CreateUserFollowers do
 
   def change do
     create table(:user_followers, primary_key: false) do
-      add :follower_id, references(:users, on_delete: :delete_all), null: false
-      add :followed_id, references(:users, on_delete: :delete_all), null: false
+      add :id, :binary_id, primary_key: true
+      add :follower_id, references(:users, on_delete: :delete_all, type: :binary_id), null: false
+      add :followed_id, references(:users, on_delete: :delete_all, type: :binary_id), null: false
 
       timestamps()
     end
