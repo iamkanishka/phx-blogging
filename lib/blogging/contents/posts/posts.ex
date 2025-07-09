@@ -126,9 +126,8 @@ defmodule Blogging.Contents.Posts.Posts do
       %Ecto.Changeset{data: %Post{}}
 
   """
-  def change_post(attrs \\ %{}) do
-    %Post{}
-    |> Post.changeset(attrs)
+ def change_post(%Post{} = post, attrs \\ %{}) do
+    Post.changeset(post, attrs)
   end
 
   @doc """
