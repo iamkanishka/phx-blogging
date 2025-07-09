@@ -71,46 +71,46 @@ defmodule Blogging.Realtime do
     PubSub.unsubscribe(Blogging.PubSub, "post:#{post_id}")
   end
 
-  @doc """
-  Unsubscribes from all topics related to a user.
-  """
-  def unsubscribe_all(user_id) do
-    PubSub.unsubscribe(Blogging.PubSub, "user:#{user_id}")
-    Presence.untrack(self(), "user:#{user_id}")
-  end
+  # @doc """
+  # Unsubscribes from all topics related to a user.
+  # """
+  # def unsubscribe_all(user_id) do
+  #   PubSub.unsubscribe(Blogging.PubSub, "user:#{user_id}")
+  #   Presence.untrack(self(), "user:#{user_id}")
+  # end
 
-  @doc """
-  Unsubscribes from all topics related to a post.
-  """
-  def unsubscribe_post(post_id) do
-    PubSub.unsubscribe(Blogging.PubSub, "post:#{post_id}")
-    Presence.untrack(self(), "post:#{post_id}")
-  end
+  # @doc """
+  # Unsubscribes from all topics related to a post.
+  # """
+  # def unsubscribe_post(post_id) do
+  #   PubSub.unsubscribe(Blogging.PubSub, "post:#{post_id}")
+  #   Presence.untrack(self(), "post:#{post_id}")
+  # end
 
 
-  @doc """
-  Unsubscribes from all topics related to a comment.
-  """
-  def unsubscribe_comment(comment_id) do
-    PubSub.unsubscribe(Blogging.PubSub, "comment:#{comment_id}")
-    Presence.untrack(self(), "comment:#{comment_id}")
-  end
+  # @doc """
+  # Unsubscribes from all topics related to a comment.
+  # """
+  # def unsubscribe_comment(comment_id) do
+  #   PubSub.unsubscribe(Blogging.PubSub, "comment:#{comment_id}")
+  #   Presence.untrack(self(), "comment:#{comment_id}")
+  # end
 
-  @doc """
-  Unsubscribes from all topics related to a reaction.
-  """
-  def unsubscribe_reaction(reaction_id) do
-    PubSub.unsubscribe(Blogging.PubSub, "reaction:#{reaction_id}")
-    Presence.untrack(self(), "reaction:#{reaction_id}")
-  end
+  # @doc """
+  # Unsubscribes from all topics related to a reaction.
+  # """
+  # def unsubscribe_reaction(reaction_id) do
+  #   PubSub.unsubscribe(Blogging.PubSub, "reaction:#{reaction_id}")
+  #   Presence.untrack(self(), "reaction:#{reaction_id}")
+  # end
 
-  @doc """
-  Unsubscribes from all topics related to a user.
-  """
-  def unsubscribe_user(user_id) do
-    PubSub.unsubscribe(Blogging.PubSub, "user:#{user_id}")
-    Presence.untrack(self(), "user:#{user_id}")
-  end
+  # @doc """
+  # Unsubscribes from all topics related to a user.
+  # """
+  # def unsubscribe_user(user_id) do
+  #   PubSub.unsubscribe(Blogging.PubSub, "user:#{user_id}")
+  #   Presence.untrack(self(), "user:#{user_id}")
+  # end
 
 
 end
