@@ -1,4 +1,4 @@
-defmodule Blogging.Accounts.Accounts do
+defmodule Blogging.AccountsCutomized.Accounts do
   import Ecto.Query, warn: false
   alias Blogging.Repo
   alias Blogging.Accounts.User
