@@ -1,10 +1,12 @@
-
 defmodule Blogging.Contents.Reactions.Reaction do
   use Ecto.Schema
   import Ecto.Changeset
 
   @reaction_types ["like", "love", "wow", "laugh", "sad", "angry"]
 
+  @primary_key {:id, :binary_id, autogenerate: true}
+  @derive {Phoenix.Param, key: :id}
+  @foreign_key_type :binary_id
   schema "reactions" do
     field :type, :string
     # "post" or "comment"
