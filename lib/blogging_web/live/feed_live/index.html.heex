@@ -1,0 +1,85 @@
+
+
+
+<!-- lib/blogging_web/templates/page/index.html.heex -->
+<div class="flex min-h-screen bg-white text-gray-900 font-sans">
+  <!-- Main Content -->
+  <main class="flex-1 max-w-4xl mx-auto px-4 py-6">
+    <!-- Tabs -->
+    <div class="flex space-x-6 border-b border-gray-200 pb-2">
+      <%= for tab <- ["For you", "Following", "Featured", "Angular", "Nestjs"] do %>
+        <button class={"text-sm font-medium " <> if(tab == "For you", do: "text-black border-b-2 border-black", else: "text-gray-500 hover:text-black")}><%= tab %></button>
+      <% end %>
+    </div>
+
+    <!-- Articles -->
+    <div class="space-y-10 mt-6">
+      <div class="flex border-b pb-6">
+        <div class="flex-1">
+          <p class="text-sm text-gray-500 mb-1">by Bhagya Rana</p>
+          <h2 class="text-xl font-bold text-black">Build a CRUD App with FastAPI</h2>
+          <p class="text-gray-700 mt-1">A Beginner-Friendly Guide to Creating APIs Fast with Python and FastAPI</p>
+          <div class="flex items-center text-sm text-gray-500 mt-2 space-x-4">
+            <span>✨</span>
+            <span>1d ago</span>
+          </div>
+        </div>
+       
+      </div>
+
+      <div class="flex border-b pb-6">
+        <div class="flex-1">
+          <div class="text-sm text-gray-500 mb-1">
+            ✍ Lionel Aimerie <span class="text-gray-400">highlighted</span>
+          </div>
+          <p class="text-sm text-gray-500 mb-1">In Utopian by Derick David</p>
+          <h2 class="text-xl font-bold text-black">What Happened To Cursor?</h2>
+          <p class="text-gray-700 mt-1">It’s over.</p>
+          <div class="flex items-center text-sm text-gray-500 mt-2 space-x-4">
+            <span>✨</span>
+            <span>4d ago</span>
+            <span>👁 1.5K</span>
+            <span>💬 62</span>
+          </div>
+        </div>
+       
+      </div>
+    </div>
+  </main>
+
+  <!-- Sidebar -->
+  <aside class="w-96 border-l px-6 py-6 hidden lg:block">
+    <div class="space-y-8">
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Staff Picks</h3>
+        <ul class="space-y-4">
+          <li>
+            <p class="font-medium text-gray-800">The Introvert’s Guide to Creating a Social Life</p>
+            <p class="text-sm text-gray-500">In Zenite by Aster Lately</p>
+            <p class="text-xs text-gray-400 mt-1">✨ Mar 27</p>
+          </li>
+          <li>
+            <p class="font-medium text-gray-800">Confessions of a Poorly Drawn Cartoonist</p>
+            <p class="text-sm text-gray-500">In MuddyUm by Dan Piraro</p>
+            <p class="text-xs text-gray-400 mt-1">✨ Apr 24</p>
+          </li>
+          <li>
+            <p class="font-medium text-gray-800">Let’s Not Decide Who Kids Are Before They Do</p>
+            <p class="text-sm text-gray-500">In Psychology of Stuff by Nir Eyal</p>
+            <p class="text-xs text-gray-400 mt-1">✨ Jun 27</p>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Recommended topics</h3>
+        <div class="flex flex-wrap gap-2">
+          <%= for topic <- ["Software Engineering", "Flutter", "Typescript", "Product Management"] do %>
+            <span class="bg-gray-100 text-sm text-gray-700 px-3 py-1 rounded-full hover:bg-gray-200 cursor-pointer"><%= topic %></span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
