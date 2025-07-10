@@ -16,6 +16,8 @@ defmodule BloggingWeb.PostLive.FormComponent do
         phx-target={@myself}
       >
         <.input field={@form[:title]} type="text" label="Title" />
+        <.input field={@form[:sub_title]} type="text" label="Sub title" />
+
         <.input field={@form[:tags]} type="text" label="Tags (comma separated)" />
 
         <div>
@@ -93,7 +95,8 @@ defmodule BloggingWeb.PostLive.FormComponent do
         {:noreply,
          socket
          |> put_flash(:info, "Post updated successfully")
-         |> push_patch(to: socket.assigns.patch)}
+         |> push_navigate(to: "/posts")}
+
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
@@ -115,7 +118,7 @@ defmodule BloggingWeb.PostLive.FormComponent do
         {:noreply,
          socket
          |> put_flash(:info, "Post created successfully")
-         |> push_patch(to: socket.assigns.patch)}
+         |> push_navigate(to: "/posts")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
