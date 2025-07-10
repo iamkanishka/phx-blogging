@@ -1,3 +1,4 @@
+<!--
 <.header>
   Post {@post.id}
   <:subtitle>This is a post record from your database.</:subtitle>
@@ -7,20 +8,49 @@
     </.link>
   </:actions>
 </.header>
+-->
 
-<.list>
-  <:item title="Name">{@post.name}</:item>
-</.list>
+
 
 <.back navigate={~p"/posts"}>Back to posts</.back>
 
-<.modal :if={@live_action == :edit} id="post-modal" show on_cancel={JS.patch(~p"/posts/#{@post}")}>
-  <.live_component
-    module={BloggingWeb.PostLive.FormComponent}
-    id={@post.id}
-    title={@page_title}
-    action={@live_action}
-    post={@post}
-    patch={~p"/posts/#{@post}"}
-  />
-</.modal>
+
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <!-- Title -->
+  <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-6">
+   {@post.title}
+  </h1>
+
+  <!-- Author Info Section -->
+  <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
+    <!-- Author Avatar -->
+    <img
+      src="https://via.placeholder.com/40"  
+      alt="Author avatar"
+      class="w-10 h-10 rounded-full object-cover"
+    />
+
+    <!-- Author Meta -->
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="font-medium text-gray-800"> {@post.user.email}</span>
+
+      <button class="px-4 py-1 border border-gray-400 rounded-full text-sm font-medium hover:bg-gray-100 transition">
+        Follow
+      </button>
+
+      <span>•</span>
+      <span>3 min read</span>
+      <span>•</span>
+      <span>Mar 16, 2025</span>
+    </div>
+  </div>
+
+  <!-- Subtitle -->
+  <p class="text-lg text-gray-700">
+    While everyone chases the next unicorn startup, these “unsexy” businesses are printing money with zero online competition.
+  </p>
+
+   <p class="  mb-4">  <%= raw @post.html_content  %>  </p>
+
+</div>
+
