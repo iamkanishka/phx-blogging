@@ -1,7 +1,7 @@
 defmodule BloggingWeb.PostLive.Show do
   use BloggingWeb, :live_view
 
-  alias Blogging.Posts
+  alias Blogging.Contents.Posts.Posts
 
   @impl true
   def mount(_params, _session, socket) do
@@ -13,7 +13,7 @@ defmodule BloggingWeb.PostLive.Show do
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
-     |> assign(:post, Posts.get_post!(id))}
+     |> assign(:post, Posts.get_post(id))}
   end
 
   defp page_title(:show), do: "Show Post"
