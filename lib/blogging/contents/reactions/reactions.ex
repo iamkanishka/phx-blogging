@@ -62,4 +62,83 @@ defmodule Blogging.Contents.Reactions.Reactions do
       conflict_target: [:user_id, :reactable_type, :reactable_id]
     )
   end
+
+  @doc """
+  Returns the list of reactions.
+  """
+  def list_reactions do
+    Repo.all(Reaction)
+  end
+
+  @doc """
+  Gets a single reaction by ID.
+  """
+  def get_reaction!(id), do: Repo.get!(Reaction, id)
+
+  @doc """
+  Gets a reaction for a specific user and reactable.
+  """
+  def get_user_reaction(user_id, reactable_type, reactable_id) do
+    Repo.get_by(Reaction,
+      user_id: user_id,
+      reactable_type: reactable_type,
+      reactable_id: reactable_id
+    )
+  end
+
+  @doc """
+  Creates a reaction (or replaces it if it exists).
+  """
+  def create_reaction(attrs \\ %{}) do
+    %Reaction{}
+    |> Reaction.changeset(attrs)
+    |> Repo.insert(
+      on_conflict: :replace_all,
+      conflict_target: [:user_id, :reactable_type, :reactable_id]
+    )
+  end
+
+  @doc """
+  Updates a reaction.
+  """
+  def update_reaction(%Reaction{} = reaction, attrs) do
+    reaction
+    |> Reaction.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a reaction.
+  """
+  def delete_reaction(%Reaction{} = reaction) do
+    Repo.delete(reaction)
+  end
+
+  @doc """
+  Returns a changeset for tracking reaction changes.
+  """
+  def change_reaction(%Reaction{} = reaction, attrs \\ %{}) do
+    Reaction.changeset(reaction, attrs)
+  end
+
+  @doc """
+  Returns counts of each reaction type for a post or comment.
+  """
+  def count_reactions(reactable_type, reactable_id) do
+    Reaction
+    |> where([r], r.reactable_type == ^reactable_type and r.reactable_id == ^reactable_id)
+    |> group_by([r], r.type)
+    |> select([r], {r.type, count(r.id)})
+    |> Repo.all()
+    |> Enum.into(%{})
+  end
+
+  @doc """
+  Deletes all reactions for a given reactable (e.g., when deleting a post).
+  """
+  def delete_reactions_for(reactable_type, reactable_id) do
+    Reaction
+    |> where([r], r.reactable_type == ^reactable_type and r.reactable_id == ^reactable_id)
+    |> Repo.delete_all()
+  end
 end
