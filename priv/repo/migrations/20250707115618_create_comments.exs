@@ -20,7 +20,7 @@ defmodule Blogging.Repo.Migrations.CreateComments do
     create index(:comments, [:post_id])
     create index(:comments, [:parent_id])
     # For efficient ltree queries
-    create index(:comments, [:path], using: :gist)
+    # create index(:comments, [:path], using: :gist)
   end
 
   def down do
