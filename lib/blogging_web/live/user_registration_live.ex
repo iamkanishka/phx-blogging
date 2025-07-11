@@ -4,9 +4,23 @@ defmodule BloggingWeb.UserRegistrationLive do
   alias Blogging.Accounts
   alias Blogging.Accounts.User
 
+  @all_topics [
+    "Software Engineering",
+    "Angular",
+    "Nestjs",
+    "Elixir",
+    "Phoenix",
+    "Go",
+    "Solidity",
+    "Astronomy",
+    "Blockchain",
+    "Finance",
+    "Healtcare"
+  ]
+
   def render(assigns) do
     ~H"""
-    <div class="mx-auto max-w-sm">
+    <div class="mx-auto max-w-3xl">
       <.header class="text-center">
         Register for an account
         <:subtitle>
@@ -31,11 +45,40 @@ defmodule BloggingWeb.UserRegistrationLive do
           Oops, something went wrong! Please check the errors below.
         </.error>
 
-        <.input field={@form[:email]} type="email" label="Email" required />
-        <.input field={@form[:password]} type="password" label="Password" required />
+        <div class="grid grid-cols-2 gap-4">
+          <.input field={@form[:username]} type="text" label="User Name" required />
+          <.input field={@form[:email]} type="email" label="Email" required />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mt-4">
+          <.input field={@form[:password]} type="password" label="Password" required />
+          <.input field={@form[:bio]} type="text" label="Short Bio" required />
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Recommended topics</h3>
+          <div class="flex flex-wrap gap-2">
+            <%= for topic <- @all_topics do %>
+              <% selected = topic in @selected_topics %>
+              <span
+                phx-click="toggle-topic"
+                phx-value-topic={topic}
+                class={[
+                  "text-sm px-3 py-1 rounded-full cursor-pointer",
+                  selected && "bg-blue-500 text-white",
+                  !selected && "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ]}
+              >
+                {topic}
+              </span>
+            <% end %>
+          </div>
+        </div>
 
         <:actions>
-          <.button phx-disable-with="Creating account..." class="w-full">Create an account</.button>
+          <.button phx-disable-with="Creating account..." class="w-full mt-2">
+            Create an account
+          </.button>
         </:actions>
       </.simple_form>
     </div>
@@ -47,13 +90,20 @@ defmodule BloggingWeb.UserRegistrationLive do
 
     socket =
       socket
-      |> assign(trigger_submit: false, check_errors: false)
+      |> assign(
+        trigger_submit: false,
+        check_errors: false,
+        all_topics: @all_topics,
+        selected_topics: []
+      )
       |> assign_form(changeset)
 
     {:ok, socket, temporary_assigns: [form: nil]}
   end
 
   def handle_event("save", %{"user" => user_params}, socket) do
+    user_params = Map.put(user_params, "intrests", socket.assigns.selected_topics)
+
     case Accounts.register_user(user_params) do
       {:ok, user} ->
         {:ok, _} =
@@ -66,8 +116,21 @@ defmodule BloggingWeb.UserRegistrationLive do
         {:noreply, socket |> assign(trigger_submit: true) |> assign_form(changeset)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
+        IO.inspect(changeset.errors)
         {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
     end
+  end
+
+  @impl true
+  def handle_event("toggle-topic", %{"topic" => topic}, socket) do
+    selected =
+      if topic in socket.assigns.selected_topics do
+        List.delete(socket.assigns.selected_topics, topic)
+      else
+        [topic | socket.assigns.selected_topics]
+      end
+
+    {:noreply, assign(socket, selected_topics: selected)}
   end
 
   def handle_event("validate", %{"user" => user_params}, socket) do
