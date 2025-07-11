@@ -7,10 +7,19 @@ defmodule Blogging.Accounts.User do
   @foreign_key_type :binary_id
   schema "users" do
     field :email, :string
+    field :username, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :current_password, :string, virtual: true, redact: true
     field :confirmed_at, :utc_datetime
+    field :bio, :string
+    field :intrests, {:array, :string}
+
+    has_many :following_relationships, Blogging.Accounts.UserFollower, foreign_key: :follower_id
+    has_many :follower_relationships, Blogging.Accounts.UserFollower, foreign_key: :followed_id
+
+    has_many :following, through: [:following_relationships, :followed]
+    has_many :followers, through: [:follower_relationships, :follower]
 
     timestamps(type: :utc_datetime)
   end
@@ -40,9 +49,12 @@ defmodule Blogging.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:email, :password])
+    |> cast(attrs, [:email, :password, :username, :bio, :intrests])
     |> validate_email(opts)
     |> validate_password(opts)
+    |> validate_intrests(opts)
+    |> validate_username(opts)
+    |> validate_bio(opts)
   end
 
   defp validate_email(changeset, opts) do
@@ -62,6 +74,36 @@ defmodule Blogging.Accounts.User do
     # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
     # |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
     |> maybe_hash_password(opts)
+  end
+
+  defp validate_intrests(changeset, _opts) do
+    changeset
+    |> validate_required([:intrests])
+    |> validate_length(:intrests, max: 10)
+    # |> validate_change(:intrests, fn :intrests, intrests ->
+    #   Enum.flat_map(intrests, fn intrest ->
+    #     if String.match?(intrest, ~r/^[a-z0-9_-]+$/) do
+    #       []
+    #     else
+    #       [intrests: "contains invalid characters (only a-z, 0-9, _, - allowed)"]
+    #     end
+    #   end)
+    # end)
+  end
+
+  defp validate_bio(changeset, _opts) do
+    changeset
+    |> validate_required([:bio])
+    |> validate_length(:bio, max: 300)
+  end
+
+  defp validate_username(changeset, opts) do
+    changeset
+    |> validate_required([:username])
+    |> validate_format(:username, ~r/^[a-zA-Z0-9_\.]+$/,
+      message: "only letters, numbers, underscores, and dots allowed"
+    )
+    |> validate_length(:username, min: 3, max: 30)
   end
 
   defp maybe_hash_password(changeset, opts) do
@@ -102,6 +144,48 @@ defmodule Blogging.Accounts.User do
       %{changes: %{email: _}} = changeset -> changeset
       %{} = changeset -> add_error(changeset, :email, "did not change")
     end
+  end
+
+  @doc """
+  A user changeset for bio.
+  """
+  def bio_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:bio])
+    |> validate_required([:bio])
+  end
+
+  @doc """
+  A user changeset for username.
+  """
+
+  def username_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:username])
+    |> validate_required([:username])
+  end
+
+  @doc """
+  A user changeset for intrests.
+  """
+  def intrests_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:intrests])
+    |> validate_required([:intrests])
+    |> validate_length(:intrests, max: 10)
+    |> validate_intrests_format()
+  end
+
+  defp validate_intrests_format(changeset) do
+    validate_change(changeset, :intrests, fn :intrests, intrests ->
+      Enum.flat_map(intrests, fn tag ->
+        if String.match?(tag, ~r/^[a-z0-9_-]+$/) do
+          []
+        else
+          [tag: "contains invalid characters (only a-z, 0-9, _, - allowed)"]
+        end
+      end)
+    end)
   end
 
   @doc """
