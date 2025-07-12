@@ -18,7 +18,7 @@ defmodule BloggingWeb.Router do
   end
 
   scope "/", BloggingWeb do
-    pipe_through :browser
+    pipe_through [:browser, :require_authenticated_user]
 
     live "/", FeedLive.Index, :index
     live "/posts", PostLive.Index, :index
