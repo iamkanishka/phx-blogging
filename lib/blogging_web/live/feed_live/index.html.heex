@@ -1,75 +1,64 @@
-
-
-
-<!-- lib/blogging_web/templates/page/index.html.heex -->
+ 
 <div class="flex min-h-screen bg-white text-gray-900 font-sans">
   <!-- Main Content -->
   <main class="flex-1 max-w-4xl mx-auto px-4 py-6">
-    <!-- Tabs 
-    
+
+    <!-- Tabs -->
     <div class="flex space-x-6 border-b border-gray-200 pb-2">
       <%= for tab <- ["For you", "Following", "Angular", "Nestjs"] do %>
-        <button class={"text-sm font-medium " <> if(tab == "For you", do: "text-black border-b-2 border-black", else: "text-gray-500 hover:text-black")}><%= tab %></button>
+        <%
+          slug = tab |> String.downcase() |> String.replace(" ", "_")
+          patch =
+            case slug do
+              "for_you" -> ~p"/"
+              "following" -> ~p"/?feed=following"
+              _ -> ~p"/?tag=#{slug}"
+            end
+        %>
+        <.link
+          patch={patch}
+          class={"text-sm font-medium transition-all duration-150 " <>
+                 if(@active_tab == tab, do: "text-black border-b-2 border-black", else: "text-gray-500 hover:text-black")}
+        >
+          <%= tab %>
+        </.link>
       <% end %>
     </div>
-    -->
 
-    <div class="flex space-x-6 border-b border-gray-200 pb-2">
-  <%= for tab <- ["For you", "Following", "Angular", "Nestjs"] do %>
-    <% 
-      slug = tab |> String.downcase() |> String.replace(" ", "_")
-      patch =
-        case slug do
-          "for_you" -> ~p"/"
-          "following" -> ~p"/?feed=following"
-          _ -> ~p"/?tag=#{slug}"
-        end
-    %>
-    <.link
-      patch={patch}
-      class={"text-sm font-medium transition-all duration-150 " <>
-             if(@active_tab == tab, do: "text-black border-b-2 border-black", else: "text-gray-500 hover:text-black")}
-    >
-      <%= tab %>
-    </.link>
+  
+<!-- Posts -->
+<div id="feed-posts" class="space-y-10 mt-6">
+  <%= for post <- @posts do %>
+    <div class="flex border-b pb-6">
+      <div class="flex-1">
+        <p class="text-sm text-gray-500 mb-1">by <%= post.user.username %></p>
+        <h2 class="text-xl font-bold text-black"><%= post.title %></h2>
+        <p class="text-gray-700 mt-1"><%= post.sub_title || truncate(post.body, 150) %></p>
+        <div class="flex items-center text-sm text-gray-500 mt-2 space-x-4">
+          <span>✨</span>
+          <span><%= post.inserted_at |> Timex.format!("%b %d", :strftime) %></span>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <%= if @pagination.page_number < @pagination.total_pages do %>
+    <div id="infinite-scroll-trigger"
+         phx-hook="InfiniteScroll"
+         data-loaded-page={@pagination.page_number}
+         data-total-pages={@pagination.total_pages}
+         phx-target={@myself}
+         phx-update="ignore">
+      <div class="text-center py-4 text-sm text-gray-400 animate-pulse">
+        Loading more...
+      </div>
+    </div>
   <% end %>
 </div>
 
 
 
-    <!-- Articles -->
-    <div class="space-y-10 mt-6">
-      <div class="flex border-b pb-6">
-        <div class="flex-1">
-          <p class="text-sm text-gray-500 mb-1">by Bhagya Rana</p>
-          <h2 class="text-xl font-bold text-black">Build a CRUD App with FastAPI</h2>
-          <p class="text-gray-700 mt-1">A Beginner-Friendly Guide to Creating APIs Fast with Python and FastAPI</p>
-          <div class="flex items-center text-sm text-gray-500 mt-2 space-x-4">
-            <span>✨</span>
-            <span>1d ago</span>
-          </div>
-        </div>
-       
-      </div>
 
-      <div class="flex border-b pb-6">
-        <div class="flex-1">
-          <div class="text-sm text-gray-500 mb-1">
-            ✍ Lionel Aimerie <span class="text-gray-400">highlighted</span>
-          </div>
-          <p class="text-sm text-gray-500 mb-1">In Utopian by Derick David</p>
-          <h2 class="text-xl font-bold text-black">What Happened To Cursor?</h2>
-          <p class="text-gray-700 mt-1">It’s over.</p>
-          <div class="flex items-center text-sm text-gray-500 mt-2 space-x-4">
-            <span>✨</span>
-            <span>4d ago</span>
-            <span>👁 1.5K</span>
-            <span>💬 62</span>
-          </div>
-        </div>
-       
-      </div>
-    </div>
   </main>
 
   <!-- Sidebar -->
@@ -100,26 +89,12 @@
         <h3 class="text-lg font-semibold mb-4">Recommended topics</h3>
         <div class="flex flex-wrap gap-2">
           <%= for topic <- ["Software Engineering", "Flutter", "Typescript", "Product Management"] do %>
-            <span class="bg-gray-100 text-sm text-gray-700 px-3 py-1 rounded-full hover:bg-gray-200 cursor-pointer"><%= topic %></span>
+            <span class="bg-gray-100 text-sm text-gray-700 px-3 py-1 rounded-full hover:bg-gray-200 cursor-pointer">
+              <%= topic %>
+            </span>
           <% end %>
         </div>
       </div>
     </div>
   </aside>
 </div>
-
-
-
-<%= if @pagination.total_pages > 1 do %>
-  <div class="mt-4 flex items-center space-x-4">
-    <%= if @pagination.page_number > 1 do %>
-      <.link patch={~p"/posts?page=#{@pagination.page_number - 1}"}>Previous</.link>
-    <% end %>
-
-    Page <%= @pagination.page_number %> of <%= @pagination.total_pages %>
-
-    <%= if @pagination.page_number < @pagination.total_pages do %>
-      <.link patch={~p"/posts?page=#{@pagination.page_number + 1}"}>Next</.link>
-    <% end %>
-  </div>
-<% end %>
