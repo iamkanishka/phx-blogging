@@ -17,7 +17,6 @@ defmodule BloggingWeb.PostLive.FormComponent do
       >
         <.input field={@form[:title]} type="text" label="Title" />
         <.input field={@form[:sub_title]} type="text" label="Sub title" />
-
         <.input field={@form[:tags]} type="text" label="Tags (comma separated)" />
 
         <div>
@@ -33,9 +32,13 @@ defmodule BloggingWeb.PostLive.FormComponent do
           </div>
         </div>
 
+        <!-- Hidden field to persist quill content on submit -->
         <input type="hidden" name="post[html_content]" id="quill_html_content" value={@html_content} />
+
         <:actions>
-          <.button type="submit">Create Post</.button>
+          <.button type="submit">
+            <%= if @action == :edit, do: "Update Post", else: "Create Post" %>
+          </.button>
         </:actions>
       </.simple_form>
     </div>
@@ -44,9 +47,7 @@ defmodule BloggingWeb.PostLive.FormComponent do
 
   @impl true
   def update(%{post: post} = assigns, socket) do
-    IO.inspect(post)
     changeset = Posts.change_post(post)
-    IO.inspect(changeset)
 
     {:ok,
      socket
@@ -63,31 +64,26 @@ defmodule BloggingWeb.PostLive.FormComponent do
       |> Posts.change_post(post_params)
       |> Map.put(:action, :validate)
 
-    IO.inspect(post_params, label: "Validating post params")
-    IO.inspect(changeset.errors, label: "Changeset errors")
-    IO.inspect(changeset.valid?, label: "Is valid?")
-
     {:noreply, assign_form(socket, changeset)}
   end
 
   @impl true
-  def handle_event("quill-change", %{"html" => html, "text" => text}, socket) do
-    IO.inspect(html, label: "Quill HTML content")
-    # Update the changeset with the new HTML content
-    IO.inspect(text, label: "Quill Editor")
-
-    changeset =
-      Ecto.Changeset.change(socket.assigns.changeset.data, %{html_content: html})
-      |> Map.put(:action, :validate)
-
+  def handle_event("quill-change", %{"html" => html, "text" => _text}, socket) do
+    # Keep html_content updated in socket state for rendering and saving
     {:noreply, assign(socket, html_content: html)}
   end
 
+  @impl true
   def handle_event("save", %{"post" => post_params}, socket) do
-    save_post(socket, socket.assigns.action, post_params)
+    case socket.assigns.action do
+      :edit -> save_post(socket, :edit, post_params)
+      :new -> save_post(socket, :new, post_params)
+    end
   end
 
   defp save_post(socket, :edit, post_params) do
+    post_params = normalize_tags(post_params)
+
     case Posts.update_post(socket.assigns.post, post_params) do
       {:ok, post} ->
         notify_parent({:saved, post})
@@ -97,19 +93,14 @@ defmodule BloggingWeb.PostLive.FormComponent do
          |> put_flash(:info, "Post updated successfully")
          |> push_navigate(to: "/posts")}
 
-
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
+        {:noreply, assign_form(socket, changeset)}
     end
   end
 
   defp save_post(socket, :new, post_params) do
-
     post_params = normalize_tags(post_params)
     post_params = append_user_id(post_params, socket.assigns.user_id)
-
-    IO.inspect(post_params, label: "post params")
-
 
     case Posts.create_post(post_params) do
       {:ok, post} ->
@@ -121,12 +112,14 @@ defmodule BloggingWeb.PostLive.FormComponent do
          |> push_navigate(to: "/posts")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        {:noreply, assign(socket, form: to_form(changeset))}
+        {:noreply, assign_form(socket, changeset)}
     end
   end
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
-    assign(socket, :form, to_form(changeset))
+    socket
+    |> assign(:form, to_form(changeset))
+    |> assign(:changeset, changeset)
   end
 
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
@@ -141,9 +134,6 @@ defmodule BloggingWeb.PostLive.FormComponent do
     Map.put(params, "tags", tags)
   end
 
-  defp append_user_id( params, user_id) do
-    Map.put(params, "user_id", user_id)
-  end
-
+  defp append_user_id(params, user_id), do: Map.put(params, "user_id", user_id)
   defp normalize_tags(params), do: params
 end
