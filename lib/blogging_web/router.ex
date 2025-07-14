@@ -25,7 +25,7 @@ defmodule BloggingWeb.Router do
 
     live "/posts/new", PostLive.CreateEdit, :new
     live "/posts/:id", PostLive.Show, :show
-    live "/posts/edit/:id", PostLive.CreateEdit, :edit
+    live "/posts/:id/edit", PostLive.CreateEdit, :edit
   end
 
   # Other scopes may use custom stacks.
