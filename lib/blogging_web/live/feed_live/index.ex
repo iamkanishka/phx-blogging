@@ -1,7 +1,8 @@
 defmodule BloggingWeb.FeedLive.Index do
+  use BloggingWeb, :live_view
+  import BloggingWeb.Helpers, only: [truncate: 2]
   alias Blogging.Accounts
   alias Blogging.Contents.Feeds.Feeds
-  use BloggingWeb, :live_view
 
   @impl true
   def mount(_params, session, socket) do
@@ -9,112 +10,88 @@ defmodule BloggingWeb.FeedLive.Index do
 
     {:ok,
      socket
+     |> assign_new(:current_user, fn -> current_user end)
      |> assign(:page_title, "Feed Blogging")
      |> assign(:active_tab, "For you")
-
-     |> assign(:current_user, current_user)}
+     |> assign(:posts, [])
+     |> assign(:pagination, nil)}
   end
-
 
   @impl true
-def handle_params(params, _url, socket) do
-  current_user = socket.assigns.current_user
+  def handle_params(params, _url, socket) do
+    current_user = socket.assigns.current_user
 
-  cond do
-    params["feed"] == "following" ->
-      page = Feeds.list_network_posts(current_user, params)
-      {:noreply,
-       assign(socket,
-         active_tab: "Following",
-         posts: page.entries,
-         pagination: page
-       )}
+    page =
+      case params do
+        %{"feed" => "following"} ->
+          Feeds.list_network_posts(current_user, params)
 
-    params["tag"] ->
-      tag = String.capitalize(params["tag"])
-      page = Feeds.list_by_tag(tag, current_user, params)
-      {:noreply,
-       assign(socket,
-         active_tab: tag,
-         posts: page.entries,
-         pagination: page
-       )}
+        %{"tag" => tag} ->
+          Feeds.list_by_tag(String.capitalize(tag), current_user, params)
 
-    true ->
-      page =
-        Feeds.list_relevant_posts(current_user, %{
-          "page" => Map.get(params, "page", "1"),
-          "page_size" => Map.get(params, "page_size", "10")
-        })
+        _ ->
+          Feeds.list_relevant_posts(current_user, %{
+            "page" => Map.get(params, "page", "1"),
+            "page_size" => Map.get(params, "page_size", "10")
+          })
+      end
 
-      {:noreply,
-       assign(socket,
-         active_tab: "For you",
-         posts: page.entries,
-         pagination: page
-       )}
+    new_tab =
+      cond do
+        params["feed"] == "following" -> "Following"
+        params["tag"] -> String.capitalize(params["tag"])
+        true -> "For you"
+      end
+
+    {:noreply,
+     assign(socket,
+       active_tab: new_tab,
+       posts: page.entries,
+       pagination: page
+     )}
   end
-end
 
+  @impl true
+  def handle_event(
+        "load-more",
+        _params,
+        %{assigns: %{pagination: pagination, current_user: user, active_tab: tab}} = socket
+      ) do
+    next_page = pagination.page_number + 1
 
+    next_page_data =
+      case tab do
+        "Following" ->
+          Feeds.list_network_posts(user, %{"page" => next_page})
 
-  # @impl true
-  # def handle_params(params, _url, socket) do
-  #   #     page = Map.get(params, "page", "1") |> String.to_integer()
-  #   # page_size = Map.get(params, "page_size", "10") |> String.to_integer()
-  #   #  %{"page" => "1", "page_size" => "10"}
+        "For you" ->
+          Feeds.list_relevant_posts(user, %{"page" => next_page})
 
-  #   page =
-  #     Feeds.list_relevant_posts(socket.assigns.current_user, %{
-  #       "page" => "1",
-  #       "page_size" => "10"
-  #     })
+        tag ->
+          Feeds.list_by_tag(tag, user, %{"page" => next_page})
+      end
 
-  #   page = Feeds.list_network_posts(socket.assigns.current_user, params)
+    {:noreply,
+     socket
+     |> assign(:pagination, next_page_data)
+     |> update(:posts, &(&1 ++ next_page_data.entries))}
+  end
+
+  #   @impl true
+  # def handle_event("load-more", _params, socket) do
+  #   %{pagination: pagination, current_user: user, active_tab: tab} = socket.assigns
+  #   next_page = pagination.page_number + 1
+
+  #   next_page_data =
+  #     case tab do
+  #       "Following" -> Feeds.list_network_posts(user, %{"page" => next_page})
+  #       "For you" -> Feeds.list_relevant_posts(user, %{"page" => next_page})
+  #       tag -> Feeds.list_by_tag(tag, user, %{"page" => next_page})
+  #     end
 
   #   {:noreply,
   #    socket
-  #    |> assign(posts: page.entries)
-  #    |> assign(pagination: page)}
-
-  #   IO.inspect(page.entries)
-
-  #   {:noreply,
-  #    socket
-  #    |> assign(posts: page.entries)
-  #    |> assign(:pagination, page)}
+  #    |> assign(:pagination, next_page_data)
+  #    |> update(:posts, &(&1 ++ next_page_data.entries))}
   # end
-
-
-#   @impl true
-# def handle_params(params, _url, socket) do
-#   current_user = socket.assigns.current_user
-#   feed = Map.get(params, "feed", "following")
-
-#   {page, active_tab} =
-#     case feed do
-#       "following" ->
-#         {
-#           Feeds.list_network_posts(current_user, params),
-#           "Following"
-#         }
-
-#       _ ->
-#         {
-#           Feeds.list_relevant_posts(current_user, %{
-#             "page" => Map.get(params, "page", "1"),
-#             "page_size" => Map.get(params, "page_size", "10")
-#           }),
-#           "For you"
-#         }
-#     end
-
-#   {:noreply,
-#    socket
-#    |> assign(:posts, page.entries)
-#    |> assign(:pagination, page)
-#    |> assign(:active_tab, active_tab)}
-# end
-
-
 end
