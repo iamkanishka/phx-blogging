@@ -18,6 +18,9 @@ defmodule Blogging.Accounts.User do
     has_many :following_relationships, Blogging.Accounts.UserFollower, foreign_key: :follower_id
     has_many :follower_relationships, Blogging.Accounts.UserFollower, foreign_key: :followed_id
 
+    has_many :wishlists, Blogging.Contents.Wishlists.Wishlist
+    has_many :wishlist_posts, through: [:wishlists, :post]
+
     has_many :following, through: [:following_relationships, :followed]
     has_many :followers, through: [:follower_relationships, :follower]
 
@@ -80,6 +83,7 @@ defmodule Blogging.Accounts.User do
     changeset
     |> validate_required([:intrests])
     |> validate_length(:intrests, max: 10)
+
     # |> validate_change(:intrests, fn :intrests, intrests ->
     #   Enum.flat_map(intrests, fn intrest ->
     #     if String.match?(intrest, ~r/^[a-z0-9_-]+$/) do
