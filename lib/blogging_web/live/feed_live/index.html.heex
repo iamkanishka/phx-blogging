@@ -4,42 +4,122 @@
   <main class="flex-1 max-w-4xl mx-auto px-4 py-6">
 
     <!-- Tabs -->
-    <div class="flex space-x-6 border-b border-gray-200 pb-2">
-      <%= for tab <- ["For you", "Following", "Angular", "Nestjs"] do %>
-        <%
-          slug = tab |> String.downcase() |> String.replace(" ", "_")
-          patch =
-            case slug do
-              "for_you" -> ~p"/"
-              "following" -> ~p"/?feed=following"
-              _ -> ~p"/?tag=#{slug}"
-            end
-        %>
-        <.link
-          patch={patch}
-          class={"text-sm font-medium transition-all duration-150 " <>
-                 if(@active_tab == tab, do: "text-black border-b-2 border-black", else: "text-gray-500 hover:text-black")}
-        >
-          <%= tab %>
-        </.link>
-      <% end %>
-    </div>
+    <!-- Tabs with Horizontal Scroll -->
+<div class="relative w-full overflow-hidden border-b   border-gray-200 pb-2">
+  <!-- Scroll Buttons -->
+  <div class="absolute left-0 top-0 bottom-0 z-10 flex items-center pb-5 px-2 bg-gradient-to-r from-white via-white to-transparent">
+    <button
+      phx-click="scroll_left"
+      class="text-gray-400 hover:text-black text-xl font-bold"
+      aria-label="Scroll Left">
+       <.icon name="hero-chevron-left" />
+    </button>
+  </div>
+  <div class="absolute right-0 top-0 bottom-0 z-10 flex items-center pb-5 px-2 bg-gradient-to-l from-white via-white to-transparent">
+    <button
+      phx-click="scroll_right"
+      class="text-gray-400 hover:text-black text-xl font-bold"
+      aria-label="Scroll Right"
+    >
+       <.icon name="hero-chevron-right" />
+  
+    </button>
+  </div>
+
+  <!-- Scrollable Tab List -->
+  <div
+    id="tab-slider"
+    phx-hook="horizontalscroll"
+    class="flex space-x-6 overflow-x-auto scroll-smooth no-scrollbar px-10"
+  >
+    <%= for tab <- @all_topics do %>
+      <%
+        slug = tab |> String.downcase() |> String.replace(" ", "_")
+        patch =
+          case slug do
+            "for_you" -> ~p"/"
+            "following" -> ~p"/?feed=following"
+            _ -> ~p"/?tag=#{slug}"
+          end
+      %>
+      <.link
+        patch={patch}
+        class={"flex-shrink-0 text-sm font-medium transition-all duration-150 whitespace-nowrap " <>
+               if(@active_tab == tab, do: "text-black border-b-2 border-black pb-2", else: "text-gray-500 hover:text-black")}
+      >
+        <%= tab %>
+      </.link>
+    <% end %>
+  </div>
+</div>
+
 
   
 <!-- Posts -->
 <div id="feed-posts" class="space-y-10 mt-6">
   <%= for post <- @posts do %>
-    <div class="flex border-b pb-6">
+   <.link patch={~p"/posts/#{post.id}"} >
+    <div class="flex border-b pb-6 ">
       <div class="flex-1">
         <p class="text-sm text-gray-500 mb-1">by <%= post.user.username %></p>
         <h2 class="text-xl font-bold text-black"><%= post.title %></h2>
         <p class="text-gray-700 mt-1"><%= post.sub_title || truncate(post.body, 150) %></p>
+       
+
         <div class="flex items-center text-sm text-gray-500 mt-2 space-x-4">
-          <span>✨</span>
-          <span><%= post.inserted_at |> Timex.format!("%b %d", :strftime) %></span>
-        </div>
+  <!-- Post date -->
+ 
+  <span><%= post.inserted_at |> Timex.format!("%b %d", :strftime) %></span>
+
+  <!-- Reactions -->
+  <div class="flex items-center space-x-3 ml-4">
+    <div class="flex items-center space-x-1" title="Like">
+      <span>👍</span>
+      <span><%=  0 %></span>
+    </div>
+    <div class="flex items-center space-x-1" title="Love">
+      <span>❤️</span>
+      <span><%=   0 %></span>
+    </div>
+    <div class="flex items-center space-x-1" title="Wow">
+      <span>😮</span>
+      <span><%=  0 %></span>
+    </div>
+    <div class="flex items-center space-x-1" title="Laugh">
+      <span>😂</span>
+      <span><%=   0 %></span>
+    </div>
+    <div class="flex items-center space-x-1" title="Sad">
+      <span>😢</span>
+      <span><%=   0 %></span>
+    </div>
+    <div class="flex items-center space-x-1" title="Angry">
+      <span>😡</span>
+      <span><%=   0 %></span>
+    </div>
+  </div>
+
+  <!-- Comments and Bookmark -->
+  <div class="flex items-center space-x-3 ml-4">
+    <div class="flex items-center space-x-1" title="Comments">
+      <span>💬</span>
+      <span><%=   0 %></span>
+    </div>
+    <div class="flex items-center space-x-1" title="Bookmark">
+      <span>🔖</span>
+      <span><%=   0 %></span>
+    </div>
+     <div class="flex items-center space-x-1" title="Bookmark">
+      <span>👁️</span>
+      <span><%=   0 %></span>
+    </div>
+  </div>
+  </div>
+
+        
       </div>
     </div>
+  </.link>
   <% end %>
 
   <%= if @pagination.page_number < @pagination.total_pages do %>
@@ -64,6 +144,7 @@
   <!-- Sidebar -->
   <aside class="w-96 border-l px-6 py-6 hidden lg:block">
     <div class="space-y-8">
+      <!--
       <div>
         <h3 class="text-lg font-semibold mb-4">Staff Picks</h3>
         <ul class="space-y-4">
@@ -84,6 +165,25 @@
           </li>
         </ul>
       </div>
+    -->
+
+    <div>
+  <h3 class="text-lg font-semibold mb-4">Your Recent Wishlist</h3>
+  <ul class="space-y-4">
+    <%= for wishlist <- @wishlists do %>
+      <li>
+        <p class="font-medium text-gray-800">
+          <%= wishlist.post.title %>
+        </p>
+       
+        <p class="text-xs text-gray-400 mt-1">
+          ✨ <%= wishlist.inserted_at |> Timex.format!("%b %d", :strftime) %>
+        </p>
+      </li>
+    <% end %>
+  </ul>
+</div>
+
 
       <div>
         <h3 class="text-lg font-semibold mb-4">Recommended topics</h3>
