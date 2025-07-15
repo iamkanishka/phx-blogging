@@ -4,6 +4,11 @@ defmodule BloggingWeb.FeedLive.Index do
   alias Blogging.Accounts
   alias Blogging.Contents.Feeds.Feeds
 
+  @all_topics [
+    "For you",
+    "Following"
+  ]
+
   @impl true
   def mount(_params, session, socket) do
     current_user = Accounts.get_user_by_session_token(session["user_token"])
@@ -14,7 +19,12 @@ defmodule BloggingWeb.FeedLive.Index do
      |> assign(:page_title, "Feed Blogging")
      |> assign(:active_tab, "For you")
      |> assign(:posts, [])
-     |> assign(:pagination, nil)}
+     |> assign(:wishlists, [])
+     |> assign(:pagination, nil)
+     |> assign_wishlist(current_user.id)
+     |> assign(:all_topics, (current_user && @all_topics ++ current_user.intrests) || @all_topics)}
+
+    #  |> assign(:all_topics, @all_topics)}
   end
 
   @impl true
@@ -77,21 +87,17 @@ defmodule BloggingWeb.FeedLive.Index do
      |> update(:posts, &(&1 ++ next_page_data.entries))}
   end
 
-  #   @impl true
-  # def handle_event("load-more", _params, socket) do
-  #   %{pagination: pagination, current_user: user, active_tab: tab} = socket.assigns
-  #   next_page = pagination.page_number + 1
+  def handle_event("scroll_left", _params, socket) do
+    {:noreply, push_event(socket, "scroll_left", %{})}
+  end
 
-  #   next_page_data =
-  #     case tab do
-  #       "Following" -> Feeds.list_network_posts(user, %{"page" => next_page})
-  #       "For you" -> Feeds.list_relevant_posts(user, %{"page" => next_page})
-  #       tag -> Feeds.list_by_tag(tag, user, %{"page" => next_page})
-  #     end
+  def handle_event("scroll_right", _params, socket) do
+    {:noreply, push_event(socket, "scroll_right", %{})}
+  end
 
-  #   {:noreply,
-  #    socket
-  #    |> assign(:pagination, next_page_data)
-  #    |> update(:posts, &(&1 ++ next_page_data.entries))}
-  # end
+  defp assign_wishlist(socket, user_id) do
+    wishlists = Blogging.Contents.Wishlists.Wishlists.list_recent_wishlists(user_id)
+
+    assign(socket, :wishlists, wishlists)
+  end
 end
