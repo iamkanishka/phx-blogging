@@ -1,11 +1,20 @@
 defmodule BloggingWeb.PostLive.Index do
+alias Blogging.Accounts
   use BloggingWeb, :live_view
 
   alias Blogging.Contents.Posts.{Posts}
 
   @impl true
-  def mount(_params, _session, socket) do
-    {:ok, assign(socket, :posts, list_posts())}
+  def mount(_params, session, socket) do
+    current_user = Accounts.get_user_by_session_token(session["user_token"])
+
+    {:ok,
+     socket
+     |> assign(:posts, list_posts(current_user.id))
+
+      |> assign(:current_user_id, current_user.id)
+     |> assign(:page_title, "Posts")
+     |> assign(:pagination, nil)}
   end
 
   @impl true
@@ -16,7 +25,6 @@ defmodule BloggingWeb.PostLive.Index do
   defp apply_action(socket, :index, _params) do
     socket
     |> assign(:page_title, "Listing Posts")
-    |> assign(:post, nil)
   end
 
   @impl true
@@ -24,10 +32,12 @@ defmodule BloggingWeb.PostLive.Index do
     post = Posts.get_post(id)
     {:ok, _} = Posts.delete_post(post)
 
-    {:noreply, assign(socket, :posts, list_posts())}
+    {:noreply, assign(socket, :posts, list_posts(socket.assigns.current_user_id))}
   end
 
-  defp list_posts do
-    Posts.list_posts()
+  defp list_posts(user_id) do
+   data =  Posts.list_posts_by_user(user_id,  page: 1, page_size: 10)
+   IO.inspect(data, label: "Posts Data")
+   data
   end
 end
