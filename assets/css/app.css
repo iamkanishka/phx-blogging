@@ -3,3 +3,13 @@
 @import "tailwindcss/utilities";
 
 /* This file is for your main application CSS */
+
+/* Hide scrollbar for all elements with .no-scrollbar */
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
