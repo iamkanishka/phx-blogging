@@ -168,16 +168,16 @@
     -->
 
     <div>
-  <h3 class="text-lg font-semibold mb-4">Your Recent Wishlist</h3>
+  <h3 class="text-lg font-semibold mb-4">Your Recent Bookmark</h3>
   <ul class="space-y-4">
-    <%= for wishlist <- @wishlists do %>
+    <%= for bookmark <- @bookmarks do %>
       <li>
         <p class="font-medium text-gray-800">
-          <%= wishlist.post.title %>
+          <%= bookmark.post.title %>
         </p>
        
         <p class="text-xs text-gray-400 mt-1">
-          ✨ <%= wishlist.inserted_at |> Timex.format!("%b %d", :strftime) %>
+          ✨ <%= bookmark.inserted_at |> Timex.format!("%b %d", :strftime) %>
         </p>
       </li>
     <% end %>
