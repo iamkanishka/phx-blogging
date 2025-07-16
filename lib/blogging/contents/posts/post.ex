@@ -14,8 +14,8 @@ defmodule Blogging.Contents.Posts.Post do
     field :view_count, :integer, default: 0
     field :is_published, :boolean, default: false
 
-    has_many :wishlists, Blogging.Contents.Wishlists.Wishlist
-    has_many :wishlisted_by_users, through: [:wishlists, :user]
+    has_many :bookmarks, Blogging.Contents.Bookmarks.Bookmark
+    has_many :bookmarked_by_users, through: [:bookmarks, :user]
 
     belongs_to :user, Blogging.Accounts.User
     has_many :comments, Blogging.Contents.Comments.Comment
