@@ -18,8 +18,8 @@ defmodule Blogging.Accounts.User do
     has_many :following_relationships, Blogging.Accounts.UserFollower, foreign_key: :follower_id
     has_many :follower_relationships, Blogging.Accounts.UserFollower, foreign_key: :followed_id
 
-    has_many :wishlists, Blogging.Contents.Wishlists.Wishlist
-    has_many :wishlist_posts, through: [:wishlists, :post]
+    has_many :bookmarks, Blogging.Contents.Bookmarks.Bookmark
+    has_many :bookmark_posts, through: [:bookmarks, :post]
 
     has_many :following, through: [:following_relationships, :followed]
     has_many :followers, through: [:follower_relationships, :follower]
