@@ -19,9 +19,9 @@ defmodule BloggingWeb.FeedLive.Index do
      |> assign(:page_title, "Feed Blogging")
      |> assign(:active_tab, "For you")
      |> assign(:posts, [])
-     |> assign(:wishlists, [])
+     |> assign(:bookmarks, [])
      |> assign(:pagination, nil)
-     |> assign_wishlist(current_user.id)
+     |> assign_bookmark(current_user.id)
      |> assign(:all_topics, (current_user && @all_topics ++ current_user.intrests) || @all_topics)}
 
     #  |> assign(:all_topics, @all_topics)}
@@ -95,9 +95,9 @@ defmodule BloggingWeb.FeedLive.Index do
     {:noreply, push_event(socket, "scroll_right", %{})}
   end
 
-  defp assign_wishlist(socket, user_id) do
-    wishlists = Blogging.Contents.Wishlists.Wishlists.list_recent_wishlists(user_id)
+  defp assign_bookmark(socket, user_id) do
+    bookmarks = Blogging.Contents.Bookmarks.Bookmarks.list_recent_bookmarks(user_id)
 
-    assign(socket, :wishlists, wishlists)
+    assign(socket, :bookmarks, bookmarks)
   end
 end
