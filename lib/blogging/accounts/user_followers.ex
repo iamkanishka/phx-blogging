@@ -5,14 +5,14 @@ defmodule Blogging.Accounts.UserFollowers do
   alias Blogging.Accounts.{User, UserFollower}
 
   # Follow a user
-  def follow_user(%User{id: follower_id}, %User{id: followed_id}) when follower_id != followed_id do
+  def follow_user(follower_id, followed_id) when follower_id != followed_id do
     %UserFollower{}
     |> UserFollower.changeset(%{follower_id: follower_id, followed_id: followed_id})
     |> Repo.insert(on_conflict: :nothing)
   end
 
   # Unfollow a user
-  def unfollow_user(%User{id: follower_id}, %User{id: followed_id}) do
+  def unfollow_user(follower_id, followed_id) do
     from(uf in UserFollower,
       where: uf.follower_id == ^follower_id and uf.followed_id == ^followed_id
     )
@@ -31,7 +31,8 @@ defmodule Blogging.Accounts.UserFollowers do
   # Get list of users a given user is following
   def list_following(%User{id: user_id}) do
     from(u in User,
-      join: uf in UserFollower, on: uf.followed_id == u.id,
+      join: uf in UserFollower,
+      on: uf.followed_id == u.id,
       where: uf.follower_id == ^user_id
     )
     |> Repo.all()
@@ -40,14 +41,13 @@ defmodule Blogging.Accounts.UserFollowers do
   # Get list of followers for a given user
   def list_followers(%User{id: user_id}) do
     from(u in User,
-      join: uf in UserFollower, on: uf.follower_id == u.id,
+      join: uf in UserFollower,
+      on: uf.follower_id == u.id,
       where: uf.followed_id == ^user_id
     )
     |> Repo.all()
   end
 end
-
-
 
 # # follow
 # Accounts.follow_user(current_user, other_user)
