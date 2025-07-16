@@ -10,63 +10,121 @@
 </.header>
 -->
 
-
-
-
-
-<div class="max-w-4xl mx-auto  px-4 py-10">
-  <div class="py-4">
- </div>
+<div class="max-w-4xl mx-auto px-4 py-10">
+  <div class="py-4"></div>
   <!-- Title -->
-  <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-6">
-   {@post.title}
+  <h1
+    class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-6"
+  >
+    {@post.title}
   </h1>
 
   <!-- Author Info Section -->
   <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
     <!-- Author Avatar -->
-    <img
-      src="https://via.placeholder.com/40"  
-      alt="Author avatar"
-      class="w-10 h-10 rounded-full object-cover"
-    />
+    <div
+      class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold text-lg"
+    >
+      <%= @post.user.username |> String.first() |> String.upcase() %>
+    </div>
 
     <!-- Author Meta -->
     <div class="flex items-center gap-2 flex-wrap">
       <span class="font-medium text-gray-800"> {@post.user.username}</span>
 
+      <%= if @current_user && @current_user.id != @post.user.id do %>
+      <div>
+        <%= if @is_following do %>
 
-      <%= if @current_user && @current_user.id == @post.user.id do %>
-  <div class="mt-4">
-    <%= if @is_following do %>
-      
-        <button phx-click="unfollow" class="px-4 py-1 border border-gray-400 rounded-full text-sm font-medium hover:bg-gray-100 transition">
-        Follow
-      </button>
-    <% else %>
-      
-       <button phx-click="follow" class="px-4 py-1 border border-gray-400 rounded-full text-sm font-medium hover:bg-gray-100 transition">
-        Follow
-      </button>
-    <% end %>
-  </div>
-<% end %>
+        <button
+          phx-click="unfollow"
+          class="px-4 py-1 border border-gray-400 rounded-full text-sm font-medium hover:bg-gray-100 transition"
+        >
+          Unfollow
+        </button>
+        <% else %>
 
-     
+        <button
+          phx-click="follow"
+          class="px-4 py-1 border border-gray-400 rounded-full text-sm font-medium hover:bg-gray-100 transition"
+        >
+          Follow
+        </button>
+        <% end %>
+      </div>
+      <% end %>
 
       <span>•</span>
-      <span>3 min read</span>
-      <span>•</span>
-      <span>Mar 16, 2025</span>
+      <span><%= @post.inserted_at |> Timex.format!("%b %d", :strftime) %></span>
     </div>
   </div>
 
+  <hr class="my-2" />
+  <!-- Reactions -->
+  <div class="flex justify-between space-x-3">
+    <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-0.5" title="Like">
+        <span>👍</span>
+        <span> 0</span>
+      </div>
+      <div class="flex items-center space-x-0.5" title="Love">
+        <span>❤️</span>
+        <span> 0 </span>
+      </div>
+      <div class="flex items-center space-x-0.5" title="Wow">
+        <span>😮</span>
+        <span> 0 </span>
+      </div>
+      <div class="flex items-center space-x-0.5" title="Laugh">
+        <span>😂</span>
+        <span> 0 </span>
+      </div>
+      <div class="flex items-center space-x-0.5" title="Sad">
+        <span>😢</span>
+        <span> 0 </span>
+      </div>
+      <div class="flex items-center space-x-0.5" title="Angry">
+        <span>😡</span>
+        <span> 0</span>
+      </div>
+    </div>
+
+    <!-- Comments and Bookmark -->
+    <div class="flex items-center space-x-3 ml-4">
+      <div class="flex items-center space-x-0.5" title="Comments">
+        <span><.icon name="hero-chat-bubble-bottom-center-text"/> </span>
+        <span> 0</span>
+      </div>
+      <div class="flex items-center space-x-0.5" title="Bookmark">
+        <span><.icon name="hero-eye"/> </span>
+        <span> 0 </span>
+      </div>
+      <div
+        class="flex items-center space-x-2 cursor-pointer hover:text-yellow-500"
+        phx-click="toggle_bookmark"
+        title="Bookmark"
+      >
+        <span>
+          <.icon name={if @bookmarked?, do: "hero-bookmark-solid", else:
+          "hero-bookmark"} />
+        </span>
+      </div>
+    </div>
+  </div>
+  <hr class="my-2" />
+
   <!-- Subtitle -->
-  <p class="text-lg text-gray-700">
-   {@post.sub_title}
-  </p>
+  <p class="text-lg text-gray-700">{@post.sub_title}</p>
 
-   <p class="  mb-4">  <%= raw @post.html_content  %>  </p>
+  <p class="mb-4"><%= raw @post.html_content %></p>
 
+  <div class="mt-6">
+    <div class="flex flex-wrap gap-2">
+      <%= for topic <- @post.tags do %>
+      <span class="bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full">
+        {topic}
+      </span>
+      <% end %>
+    </div>
+  </div>
 </div>
-
