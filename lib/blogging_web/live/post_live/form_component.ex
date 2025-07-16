@@ -3,6 +3,20 @@ defmodule BloggingWeb.PostLive.FormComponent do
 
   alias Blogging.Contents.Posts.Posts
 
+  @all_topics [
+    "Software Engineering",
+    "Angular",
+    "Nestjs",
+    "Elixir",
+    "Phoenix",
+    "Go",
+    "Solidity",
+    "Astronomy",
+    "Blockchain",
+    "Finance",
+    "Healtcare"
+  ]
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -17,7 +31,27 @@ defmodule BloggingWeb.PostLive.FormComponent do
       >
         <.input field={@form[:title]} type="text" label="Title" />
         <.input field={@form[:sub_title]} type="text" label="Sub title" />
-        <.input field={@form[:tags]} type="text" label="Tags (comma separated)" />
+
+        <div>
+          <h3 class="text-lg font-semibold mb-4">Tags</h3>
+          <div class="flex flex-wrap gap-2">
+            <%= for topic <- @all_topics do %>
+              <% selected = topic in @selected_topics %>
+              <span
+                phx-click="toggle-topic"
+                phx-target={@myself}
+                phx-value-topic={topic}
+                class={[
+                  "text-sm px-3 py-1 rounded-full cursor-pointer",
+                  selected && "bg-blue-500 text-white",
+                  !selected && "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                ]}
+              >
+                {topic}
+              </span>
+            <% end %>
+          </div>
+        </div>
 
         <div>
           <label class="block text-sm font-medium mb-1">Content</label>
@@ -32,12 +66,12 @@ defmodule BloggingWeb.PostLive.FormComponent do
           </div>
         </div>
 
-        <!-- Hidden field to persist quill content on submit -->
+    <!-- Hidden field to persist quill content on submit -->
         <input type="hidden" name="post[html_content]" id="quill_html_content" value={@html_content} />
 
         <:actions>
           <.button type="submit">
-            <%= if @action == :edit, do: "Update Post", else: "Create Post" %>
+            {if @action == :edit, do: "Update Post", else: "Create Post"}
           </.button>
         </:actions>
       </.simple_form>
@@ -48,16 +82,25 @@ defmodule BloggingWeb.PostLive.FormComponent do
   @impl true
   def update(%{post: post} = assigns, socket) do
     changeset = Posts.change_post(post)
+   selected_topics =
+      case assigns.action do
+        :edit -> post.tags
+        :new -> []
+      end
 
     {:ok,
      socket
      |> assign(assigns)
+     |> assign(
+       all_topics: @all_topics,
+       selected_topics: selected_topics
+     )
      |> assign_form(changeset)}
   end
 
   @impl true
   def handle_event("validate", %{"post" => post_params}, socket) do
-    post_params = normalize_tags(post_params)
+    post_params = append_tags(post_params, socket)
 
     changeset =
       socket.assigns.post
@@ -75,15 +118,26 @@ defmodule BloggingWeb.PostLive.FormComponent do
 
   @impl true
   def handle_event("save", %{"post" => post_params}, socket) do
+    post_params = append_tags(post_params, socket)
+
     case socket.assigns.action do
       :edit -> save_post(socket, :edit, post_params)
       :new -> save_post(socket, :new, post_params)
     end
   end
 
-  defp save_post(socket, :edit, post_params) do
-    post_params = normalize_tags(post_params)
+  def handle_event("toggle-topic", %{"topic" => topic}, socket) do
+    selected =
+      if topic in socket.assigns.selected_topics do
+        List.delete(socket.assigns.selected_topics, topic)
+      else
+        [topic | socket.assigns.selected_topics]
+      end
 
+    {:noreply, assign(socket, selected_topics: selected)}
+  end
+
+  defp save_post(socket, :edit, post_params) do
     case Posts.update_post(socket.assigns.post, post_params) do
       {:ok, post} ->
         notify_parent({:saved, post})
@@ -99,7 +153,6 @@ defmodule BloggingWeb.PostLive.FormComponent do
   end
 
   defp save_post(socket, :new, post_params) do
-    post_params = normalize_tags(post_params)
     post_params = append_user_id(post_params, socket.assigns.user_id)
 
     case Posts.create_post(post_params) do
@@ -124,16 +177,6 @@ defmodule BloggingWeb.PostLive.FormComponent do
 
   defp notify_parent(msg), do: send(self(), {__MODULE__, msg})
 
-  defp normalize_tags(%{"tags" => tags_string} = params) when is_binary(tags_string) do
-    tags =
-      tags_string
-      |> String.split(",", trim: true)
-      |> Enum.map(&String.trim/1)
-      |> Enum.reject(&(&1 == ""))
-
-    Map.put(params, "tags", tags)
-  end
-
   defp append_user_id(params, user_id), do: Map.put(params, "user_id", user_id)
-  defp normalize_tags(params), do: params
+  defp append_tags(params, socket), do: Map.put(params, "tags", socket.assigns.selected_topics)
 end
