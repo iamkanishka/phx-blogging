@@ -96,6 +96,10 @@ defmodule BloggingWeb.UserAuth do
     assign(conn, :current_user, user)
   end
 
+  def fetch_current_url(conn, _opts) do
+    assign(conn, :current_path, conn.request_path)
+  end
+
   defp ensure_user_token(conn) do
     if token = get_session(conn, :user_token) do
       {token, conn}
