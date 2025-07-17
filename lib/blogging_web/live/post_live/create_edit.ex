@@ -38,7 +38,7 @@ defmodule BloggingWeb.PostLive.CreateEdit do
   end
 
   @impl true
-  def handle_info({BloggingWeb.PostLive.FormComponent, {:saved, post}}, socket) do
+  def handle_info({BloggingWeb.PostLive.FormComponent, {:saved, _post}}, socket) do
     {:noreply, push_navigate(socket, to: "/posts")}
   end
 
@@ -48,7 +48,7 @@ defmodule BloggingWeb.PostLive.CreateEdit do
     # Update the changeset with the new HTML content
     IO.inspect(text, label: "Quill Editor")
 
-    changeset =
+    _changeset =
       Ecto.Changeset.change(socket.assigns.changeset.data, %{html_content: html})
       |> Map.put(:action, :validate)
 
