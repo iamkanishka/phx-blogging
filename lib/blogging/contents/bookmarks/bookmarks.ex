@@ -3,6 +3,9 @@ defmodule Blogging.Contents.Bookmarks.Bookmarks do
   alias Blogging.Repo
 
   alias Blogging.Contents.Bookmarks.Bookmark
+  alias Blogging.Contents.Comments.Comment
+  alias Blogging.Contents.Reactions.Reaction
+
 
   # list recent  bookmark by ID
   def list_recent_bookmarks(user_id) do
@@ -13,6 +16,75 @@ defmodule Blogging.Contents.Bookmarks.Bookmarks do
       limit: 5
     )
     |> Repo.all()
+  end
+
+  @reaction_types ~w(like love wow laugh sad angry)
+
+  def list_user_bookmarks(user_id, page \\ 1, per_page \\ 10) do
+    offset = (page - 1) * per_page
+
+    # Subquery: comment count per post
+    comment_counts_query =
+      from c in Comment,
+        group_by: c.post_id,
+        select: %{post_id: c.post_id, comment_count: count(c.id)}
+
+    # Subquery: reaction counts per post and type
+    reaction_counts_query =
+      from r in Reaction,
+        where: r.reactable_type == "post",
+        group_by: [r.reactable_id, r.type],
+        select: %{
+          post_id: r.reactable_id,
+          type: r.type,
+          count: count(r.id)
+        }
+
+    # Subquery: aggregate reactions per post
+    reaction_agg_query =
+      from r in subquery(reaction_counts_query),
+        group_by: r.post_id,
+        select: %{
+          post_id: r.post_id,
+          reactions: fragment("jsonb_object_agg(?, ?)", r.type, r.count)
+        }
+
+    # Main query: Bookmarked posts enriched with counts
+    query =
+      from b in Bookmark,
+        where: b.user_id == ^user_id,
+        join: p in assoc(b, :post),
+        left_join: cc in subquery(comment_counts_query),
+        on: cc.post_id == p.id,
+        left_join: rc in subquery(reaction_agg_query),
+        on: rc.post_id == p.id,
+        order_by: [desc: b.inserted_at],
+        limit: ^per_page,
+        offset: ^offset,
+        select: %{
+          bookmark_id: b.id,
+          inserted_at: b.inserted_at,
+          post: %{
+            id: p.id,
+            title: p.title,
+            sub_title: p.sub_title,
+            comment_count: coalesce(cc.comment_count, 0),
+            reactions: coalesce(rc.reactions, fragment("'{}'::jsonb"))
+          }
+        }
+
+    Repo.all(query)
+  end
+
+
+
+
+
+  def count_user_bookmarks(user_id) do
+    Bookmark
+    |> where([b], b.user_id == ^user_id)
+    |> select([b], count(b.id))
+    |> Repo.one()
   end
 
   # Get bookmark by user and post
