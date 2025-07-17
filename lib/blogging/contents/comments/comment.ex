@@ -10,11 +10,11 @@ defmodule Blogging.Contents.Comments.Comment do
     field :depth, :integer, default: 0
 
     belongs_to :user, Blogging.Accounts.User
-    belongs_to :post, Blogging.Contents.Post
-    belongs_to :parent, Blogging.Contents.Comment
+    belongs_to :post, Blogging.Contents.Posts.Post
+    belongs_to :parent, Blogging.Contents.Comments.Comment
 
-    has_many :replies, Blogging.Contents.Comment, foreign_key: :parent_id
-    has_many :reactions, Blogging.Contents.Reaction
+    has_many :replies, Blogging.Contents.Comments.Comment, foreign_key: :parent_id
+    has_many :reactions, Blogging.Contents.Reactions.Reaction
 
     timestamps()
   end
