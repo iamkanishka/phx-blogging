@@ -1,4 +1,5 @@
 defmodule BloggingWeb.Router do
+
   use BloggingWeb, :router
 
   import BloggingWeb.UserAuth
@@ -11,6 +12,7 @@ defmodule BloggingWeb.Router do
     plug :protect_from_forgery
     plug :put_secure_browser_headers
     plug :fetch_current_user
+    plug :fetch_current_url
   end
 
   pipeline :api do
@@ -22,10 +24,13 @@ defmodule BloggingWeb.Router do
 
     live "/", FeedLive.Index, :index
     live "/posts", PostLive.Index, :index
-
     live "/posts/new", PostLive.CreateEdit, :new
     live "/posts/:id", PostLive.Show, :show
     live "/posts/:id/edit", PostLive.CreateEdit, :edit
+
+    live "/profile", ProfileLive.Index, :index
+    live "/notifications", NotificationLive.Index, :index
+    live "/bookmarks", BookmarkLive.Index, :index
   end
 
   # Other scopes may use custom stacks.
