@@ -22,13 +22,13 @@ import { Socket } from "phoenix";
 import { LiveSocket } from "phoenix_live_view";
 import topbar from "../vendor/topbar";
 import quillhook from "./quillhook.js";
-import infinitescroll from "./infinitescroll.js";
+import InfiniteScroll from "./infinitescroll.js";
 import horizontalscroll from "./horizontalscroll.js";
 
 
 let Hooks = {};
 Hooks.quillhook = quillhook;
-Hooks.infinitescroll = infinitescroll;
+Hooks.InfiniteScroll = InfiniteScroll;
 Hooks.horizontalscroll = horizontalscroll;
 
 
