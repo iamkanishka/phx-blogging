@@ -101,7 +101,7 @@ defmodule Blogging.Accounts.User do
     |> validate_length(:bio, max: 300)
   end
 
-  defp validate_username(changeset, opts) do
+  defp validate_username(changeset, _opts) do
     changeset
     |> validate_required([:username])
     |> validate_format(:username, ~r/^[a-zA-Z0-9_\.]+$/,
