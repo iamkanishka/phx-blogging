@@ -1,0 +1,82 @@
+
+
+
+
+<div class="container mx-auto max-w-7xl  py-8">
+  <.header>
+    Notifications
+ 
+  </.header>
+
+<!-- lib/blogging_web/templates/page/index.html.heex -->
+<div class="flex min-h-screen bg-white text-gray-900 font-sans">
+  <!-- Main Content -->
+  <main class="flex-1  mx-auto py-6">
+
+    <div class="space-y-6">
+    <%= for item <- @activities do %>
+      <div class="flex items-start space-x-3">
+        <!-- Avatar -->
+        <div class="flex-shrink-0">
+         
+            <div class="w-10 h-10 rounded-full bg-gray-300 text-white font-semibold flex items-center justify-center uppercase">
+              <%= String.first(item.name) %>
+            </div>
+         
+        </div>
+
+        <!-- Content -->
+        <div>
+          <p class="text-sm text-gray-800">
+            <span class="font-semibold"><%= item.name %></span>
+            <%= raw item.action %>
+          </p>
+          <p class="text-xs text-gray-500 mt-1">
+            <%= item.timestamp %>
+          </p>
+        </div>
+      </div>
+    <% end %>
+  </div>
+ 
+  </main>
+
+  <!-- Sidebar -->
+  <aside class="w-96 border-l px-6 py-6 hidden lg:block">
+    <div class="space-y-8">
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Staff Picks</h3>
+        <ul class="space-y-4">
+          <li>
+            <p class="font-medium text-gray-800">The Introvert’s Guide to Creating a Social Life</p>
+            <p class="text-sm text-gray-500">In Zenite by Aster Lately</p>
+            <p class="text-xs text-gray-400 mt-1">✨ Mar 27</p>
+          </li>
+          <li>
+            <p class="font-medium text-gray-800">Confessions of a Poorly Drawn Cartoonist</p>
+            <p class="text-sm text-gray-500">In MuddyUm by Dan Piraro</p>
+            <p class="text-xs text-gray-400 mt-1">✨ Apr 24</p>
+          </li>
+          <li>
+            <p class="font-medium text-gray-800">Let’s Not Decide Who Kids Are Before They Do</p>
+            <p class="text-sm text-gray-500">In Psychology of Stuff by Nir Eyal</p>
+            <p class="text-xs text-gray-400 mt-1">✨ Jun 27</p>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="text-lg font-semibold mb-4">Recommended topics</h3>
+        <div class="flex flex-wrap gap-2">
+          <%= for topic <- ["Software Engineering", "Flutter", "Typescript", "Product Management"] do %>
+            <span class="bg-gray-100 text-sm text-gray-700 px-3 py-1 rounded-full hover:bg-gray-200 cursor-pointer"><%= topic %></span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
