@@ -1,0 +1,83 @@
+
+
+
+
+<div class="container mx-auto max-w-7xl  py-8">
+  <.header>
+    Bookmarks
+   
+  </.header>
+
+<!-- lib/blogging_web/templates/page/index.html.heex -->
+<div class="flex min-h-screen bg-white text-gray-900 font-sans">
+  <!-- Main Content -->
+  <main class="flex-1  mx-auto py-6">
+
+    <div id="bookmarks">
+  <%= for %{bookmark_id: bid, inserted_at: inserted_at, post: post} <- @bookmarks do %>
+    <div id={"bookmark-#{bid}"} class="p-4 border-b border-gray-200">
+      <h2 class="text-xl font-bold"><%= post.title %></h2>
+      <p class="text-gray-600"><%= post.sub_title %></p>
+
+      <div class="mt-2 text-sm text-gray-500">
+        <p><%= post.comment_count %> comments</p>
+
+        <div class="flex flex-wrap gap-2 mt-1">
+          <%= for {type, count} <- Map.to_list(post.reactions) do %>
+            <span class="px-2 py-1 bg-gray-100 rounded text-xs">
+              <%= type %>: <%= count %>
+            </span>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="text-xs text-gray-400 mt-2">Bookmarked at <%= inserted_at %></div>
+    </div>
+  <% end %>
+</div>
+
+<% if @loaded_page < @total_pages do %>
+  <div
+    id="load-more-trigger"
+    phx-hook="InfiniteScroll"
+    phx-target={@myself}
+    data-loaded-page={@loaded_page}
+    data-total-pages={@total_pages}
+    class="h-10"
+  >
+  </div>
+<% end %>
+
+ 
+  </main>
+
+  <!-- Sidebar -->
+  <aside class="w-96 border-l px-6 py-6 hidden lg:block">
+  
+         
+            <div class="w-24 h-24 rounded-full bg-gray-300 text-white font-semibold flex items-center justify-center uppercase">
+             K
+            </div>
+             
+ 
+         
+       
+      <h2 class="text-xl font-bold mt-4">{@current_user.username}</h2>
+      <p class="text-sm text-gray-600">68 followers</p>
+      <p class="mt-3 text-gray-700 text-sm">
+        Senior Software Developer and Open-Source Contributor (JS/TS, Elixir, Go, Solidity) 👨‍💻<br>
+        Astrophile 🛸 | Stargazer 🌕
+      </p>
+      <a href="https://kanishkanaik.dev/" class="text-blue-600 hover:underline text-sm block mt-2">kanishkanaik.dev</a>
+      <a href="#" class="mt-4 inline-block text-green-600 text-xs hover:underline">Edit profile</a>
+   
+
+   
+
+ 
+  </aside>
+</div>
+
+
+
+</div>
