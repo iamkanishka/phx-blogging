@@ -18,6 +18,7 @@ defmodule BloggingWeb.UserRegistrationLive do
     "Healtcare"
   ]
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="mx-auto max-w-3xl">
@@ -85,6 +86,7 @@ defmodule BloggingWeb.UserRegistrationLive do
     """
   end
 
+  @impl true
   def mount(_params, _session, socket) do
     changeset = Accounts.change_user_registration(%User{})
 
