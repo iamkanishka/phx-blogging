@@ -1,5 +1,4 @@
 defmodule BloggingWeb.Router do
-
   use BloggingWeb, :router
 
   import BloggingWeb.UserAuth
@@ -31,6 +30,7 @@ defmodule BloggingWeb.Router do
     live "/profile", ProfileLive.Index, :index
     live "/notifications", NotificationLive.Index, :index
     live "/bookmarks", BookmarkLive.Index, :index
+    live "/following", FollowingFollwers.Index, :index
   end
 
   # Other scopes may use custom stacks.
