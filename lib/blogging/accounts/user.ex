@@ -24,6 +24,16 @@ defmodule Blogging.Accounts.User do
     has_many :following, through: [:following_relationships, :followed]
     has_many :followers, through: [:follower_relationships, :follower]
 
+    has_many :subscribers_relationships, Blogging.Accounts.EmailSubscription,
+      foreign_key: :user_id
+
+    has_many :subscriber_users, through: [:subscribers_relationships, :subscriber]
+
+    has_many :subscriptions_relationships, Blogging.Accounts.EmailSubscription,
+      foreign_key: :subscriber_user_id
+
+    has_many :subscribed_to_users, through: [:subscriptions_relationships, :user]
+
     timestamps(type: :utc_datetime)
   end
 
