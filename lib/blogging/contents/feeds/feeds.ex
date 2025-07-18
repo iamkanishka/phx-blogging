@@ -50,7 +50,7 @@ defmodule Blogging.Contents.Feeds.Feeds do
 
     # Users the current user is following
     following_ids_query =
-      from uf in Blogging.Accounts.UserFollower,
+      from uf in UserFollower,
         where: uf.follower_id == ^current_user_id,
         select: uf.followed_id
 
