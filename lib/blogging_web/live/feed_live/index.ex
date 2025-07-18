@@ -15,7 +15,7 @@ defmodule BloggingWeb.FeedLive.Index do
 
     {:ok,
      socket
-     |> assign_new(:current_user, fn -> current_user end)
+     |> assign(:current_user,  current_user)
      |> assign(:page_title, "Feed Blogging")
      |> assign(:active_tab, "For you")
      |> assign(:posts, [])
@@ -30,6 +30,8 @@ defmodule BloggingWeb.FeedLive.Index do
   @impl true
   def handle_params(params, _url, socket) do
     current_user = socket.assigns.current_user
+
+    IO.inspect(params, label: "FeedLive.Index params")
 
     page =
       case params do
