@@ -1,0 +1,81 @@
+
+
+
+
+<div class="container mx-auto max-w-7xl  py-8">
+  <.header>
+    Bookmarks
+   
+  </.header>
+
+<!-- lib/blogging_web/templates/page/index.html.heex -->
+<div class="flex min-h-screen bg-white text-gray-900 font-sans">
+  <!-- Main Content -->
+  <main class="flex-1  mx-auto py-6">
+
+  <div class="max-w-2xl mx-auto px-4 py-10">
+  <h1 class="text-3xl font-bold mb-6"><%= length(@following) %> following</h1>
+
+ 
+
+  <ul class="space-y-6">
+    <%= for user <- @following do %>
+      <li class="flex items-center justify-between">
+        <div class="flex items-center space-x-4">
+          
+            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-700 text-white font-bold uppercase">
+              <%= String.first(user.username) %>
+            </div>
+        
+          <div>
+            <p class="font-semibold text-gray-900"><%= user.username %></p>
+            <%= if user.bio do %>
+              <p class="text-sm text-gray-600"><%= user.bio %></p>
+            <% end %>
+          </div>
+        </div>
+        <div>
+          <button class="px-4 py-1.5 bg-gray-100 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-200">
+            Following
+          </button>
+        </div>
+      </li>
+    <% end %>
+  </ul>
+</div>
+
+ 
+ 
+ 
+  </main>
+
+  <!-- Sidebar -->
+  <aside class="w-96 border-l px-6 py-6 hidden lg:block">
+  
+         
+            <div class="w-24 h-24 rounded-full bg-gray-300 text-white font-semibold flex items-center justify-center uppercase">
+             K
+            </div>
+             
+ 
+         
+       
+      <h2 class="text-xl font-bold mt-4">{@current_user.username}</h2>
+      <p class="text-sm text-gray-600">68 followers</p>
+      <p class="mt-3 text-gray-700 text-sm">
+        Senior Software Developer and Open-Source Contributor (JS/TS, Elixir, Go, Solidity) 👨‍💻<br>
+        Astrophile 🛸 | Stargazer 🌕
+      </p>
+      <a href="https://kanishkanaik.dev/" class="text-blue-600 hover:underline text-sm block mt-2">kanishkanaik.dev</a>
+      <a href="#" class="mt-4 inline-block text-green-600 text-xs hover:underline">Edit profile</a>
+   
+
+   
+
+ 
+  </aside>
+</div>
+
+
+
+</div>
