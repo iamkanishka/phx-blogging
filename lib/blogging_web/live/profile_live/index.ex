@@ -1,7 +1,7 @@
 defmodule BloggingWeb.ProfileLive.Index do
-
-alias Blogging.Accounts
   use BloggingWeb, :live_view
+
+  alias Blogging.Accounts
 
   alias Blogging.Contents.Posts.{Posts}
 
@@ -12,8 +12,8 @@ alias Blogging.Accounts
     {:ok,
      socket
      |> assign(:posts, list_posts(current_user.id))
-
-      |> assign(:current_user_id, current_user.id)
+     |> assign(:current_user, current_user)
+     |> assign(:current_user_id, current_user.id)
      |> assign(:page_title, "Posts")
      |> assign(:pagination, nil)}
   end
@@ -37,8 +37,6 @@ alias Blogging.Accounts
   end
 
   defp list_posts(user_id) do
-   data =  Posts.list_posts_by_user(user_id,  page: 1, page_size: 10)
-   IO.inspect(data, label: "Posts Data")
-   data
+    Posts.list_posts_by_user(user_id, page: 1, page_size: 10)
   end
 end
