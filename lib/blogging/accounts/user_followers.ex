@@ -130,7 +130,8 @@ defmodule Blogging.Accounts.UserFollowers do
       on: s.user_id == uf.followed_id and s.subscriber_user_id == ^user_id,
       select: %{
         user: u,
-        subscribed: not is_nil(s.id)
+        is_subscribed: not is_nil(s.id),
+        is_following: true
       }
     )
     |> Repo.all()
@@ -140,20 +141,24 @@ defmodule Blogging.Accounts.UserFollowers do
   Returns a list of users who are following the given user,
   with a flag indicating whether the given user has an email subscription to each follower.
   """
-  def list_followers_with_subscription(user_id) do
-    from(uf in UserFollower,
-      where: uf.followed_id == ^user_id,
-      join: u in User,
-      on: u.id == uf.follower_id,
-      left_join: s in EmailSubscription,
+def list_followers_with_subscription(user_id, current_user_id) do
+  from(uf in UserFollower,
+    where: uf.followed_id == ^user_id,
+    join: u in User, on: u.id == uf.follower_id,
+    left_join: s in EmailSubscription,
       on: s.user_id == u.id and s.subscriber_user_id == ^user_id,
-      select: %{
-        user: u,
-        subscribed: not is_nil(s.id)
-      }
-    )
-    |> Repo.all()
-  end
+    # Check if current_user is following the follower (u.id)
+    left_join: f in UserFollower,
+      on: f.follower_id == ^current_user_id and f.followed_id == u.id,
+    select: %{
+      user: u,
+      is_subscribed: not is_nil(s.id),
+      is_following: not is_nil(f.id)
+    }
+  )
+  |> Repo.all()
+end
+
 
   # ----------------------------------------------------------------------------
   # CHECK FOLLOWING STATUS
