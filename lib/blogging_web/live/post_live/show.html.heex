@@ -53,6 +53,16 @@
         <% end %>
       </div>
       <% end %>
+   <%= if @is_following do %>
+       <button
+        phx-click={if @is_subscribed, do: "unsubscribe", else: "subscribe"}
+        phx-value-user_id={@post.user.id}
+      
+      >
+        <.icon name={if @is_subscribed, do: "hero-envelope-solid", else: "hero-envelope"} class="w-5 h-5" />
+      </button>
+      <% end %>
+
 
       <span>•</span>
       <span><%= @post.inserted_at |> Timex.format!("%b %d", :strftime) %></span>
