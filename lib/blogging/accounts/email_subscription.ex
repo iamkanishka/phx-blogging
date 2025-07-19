@@ -5,7 +5,7 @@ defmodule Blogging.Accounts.EmailSubscription do
   @primary_key {:id, :binary_id, autogenerate: true}
   @derive {Phoenix.Param, key: :id}
   @foreign_key_type :binary_id
-  schema "user_subscriptions" do
+  schema "user_email_subscriptions" do
     belongs_to :user, Blogging.Accounts.User, foreign_key: :user_id
     belongs_to :subscriber, Blogging.Accounts.User, foreign_key: :subscriber_user_id
 
