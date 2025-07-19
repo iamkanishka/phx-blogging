@@ -4,10 +4,14 @@ defmodule BloggingWeb.ProfileLive.Index do
   alias Blogging.Accounts
 
   alias Blogging.Contents.Posts.{Posts}
+  alias Blogging.Accounts.UserFollowers
 
   @impl true
   def mount(_params, session, socket) do
     current_user = Accounts.get_user_by_session_token(session["user_token"])
+
+    following_count = UserFollowers.count_following(current_user.id)
+    followers_count = UserFollowers.count_followers(current_user.id)
 
     {:ok,
      socket
@@ -15,6 +19,8 @@ defmodule BloggingWeb.ProfileLive.Index do
      |> assign(:current_user, current_user)
      |> assign(:current_user_id, current_user.id)
      |> assign(:page_title, "Posts")
+     |> assign(:following_count, following_count)
+     |> assign(:followers_count, followers_count)
      |> assign(:pagination, nil)}
   end
 
