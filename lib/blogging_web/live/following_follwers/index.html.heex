@@ -2,45 +2,65 @@
 
 
 
-<div class="container mx-auto max-w-7xl  py-8">
-  <.header>
-    Bookmarks
-   
-  </.header>
-
+<div class="container mx-auto max-w-7xl">
+ 
 <!-- lib/blogging_web/templates/page/index.html.heex -->
 <div class="flex min-h-screen bg-white text-gray-900 font-sans">
   <!-- Main Content -->
   <main class="flex-1  mx-auto py-6">
 
-  <div class="max-w-2xl mx-auto px-4 py-10">
-  <h1 class="text-3xl font-bold mb-6"><%= length(@following) %> following</h1>
+  <div class="max-w-2xl mx-auto px-4  ">
+      <div class="max-w-5xl mx-auto ">
+  <nav class="text-sm text-gray-500 mb-4">
+    <.link navigate={~p"/"} class="hover:underline">Kanishka Naik</.link>
+    <span class="mx-2">›</span>
+    <span class="text-gray-700">Followers</span>
+  </nav>
+
+  <h1 class="text-4xl font-bold text-gray-900">
+    <%= @following_count %> <span class="font-medium text-gray-600">following</span>
+  </h1>
+</div>
 
  
 
-  <ul class="space-y-6">
-    <%= for user <- @following do %>
-      <li class="flex items-center justify-between">
-        <div class="flex items-center space-x-4">
-          
-            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-700 text-white font-bold uppercase">
-              <%= String.first(user.username) %>
-            </div>
-        
-          <div>
-            <p class="font-semibold text-gray-900"><%= user.username %></p>
-            <%= if user.bio do %>
-              <p class="text-sm text-gray-600"><%= user.bio %></p>
-            <% end %>
-          </div>
-        </div>
-        <div>
-          <button class="px-4 py-1.5 bg-gray-100 text-sm font-medium text-gray-700 border border-gray-300 rounded-md hover:bg-gray-200">
-            Following
-          </button>
-        </div>
-      </li>
-    <% end %>
+    <ul class="space-y-6">
+<%= for {user, index} <- Enum.with_index(@following_users) do %>
+  <li class="flex items-center justify-between py-4 space-x-4">
+    <!-- Avatar + Username + Bio -->
+    <div class="flex items-center space-x-4 overflow-hidden">
+      <div class="w-10 h-10 flex items-center justify-center rounded-full bg-gray-700 text-white font-bold uppercase flex-shrink-0">
+        <%= String.first(user.user.username) %>
+      </div>
+      <div class="overflow-hidden text-ellipsis">
+        <p class="font-semibold text-gray-900 inline"><%= user.user.username %></p>
+        <p class="text-sm text-gray-600"><%= user.user.bio %></p>
+      </div>
+    </div>
+
+    <!-- Actions: Unfollow + Mail icon in same line -->
+    <div class="flex items-center space-x-2">
+      <button
+        phx-click={if user.is_following, do: "unfollow", else: "follow"}
+        phx-value-user_id={user.user.id}
+        phx-value-index={index}
+        class="px-4 py-1 border border-gray-400 rounded-full text-sm font-medium hover:bg-gray-100 transition"
+      >
+        <%= if user.is_following, do: "Unfollow", else: "Follow" %>
+      </button>
+      <button
+        phx-click={if user.is_subscribed, do: "unsubscribe", else: "subscribe"}
+        phx-value-user_id={user.user.id}
+        phx-value-index={index}
+      >
+        <.icon name={if user.is_subscribed, do: "hero-envelope-solid", else: "hero-envelope"} class="w-5 h-5" />
+      </button>
+    </div>
+  </li>
+<% end %>
+
+
+
   </ul>
 </div>
 
