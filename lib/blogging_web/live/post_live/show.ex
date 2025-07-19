@@ -1,4 +1,5 @@
 defmodule BloggingWeb.PostLive.Show do
+  alias Blogging.Accounts.EmailSubscriptions
   alias Blogging.Contents.Bookmarks.Bookmarks
   alias Blogging.Accounts
   use BloggingWeb, :live_view
@@ -16,6 +17,7 @@ defmodule BloggingWeb.PostLive.Show do
       |> assign(:page_title, "Post Details")
       |> assign(:post, nil)
       |> assign(:is_following, false)
+      |> assign(:is_subscribed, false)
       |> assign(:bookmarked, false)
 
     {:ok, socket}
@@ -38,11 +40,21 @@ defmodule BloggingWeb.PostLive.Show do
         false
       end
 
+    is_subscribed? =
+      if socket.assigns.current_user do
+        EmailSubscriptions.subscribed?(post.user.id, socket.assigns.current_user.id)
+      else
+        false
+      end
+
+    IO.inspect(is_subscribed?, label: "Is Subscribed")
+
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
      |> assign(:post, post)
      |> assign(:bookmarked?, bookmarked)
+     |> assign(:is_subscribed, is_subscribed?)
      |> assign(:is_following, is_following?)}
   end
 
@@ -61,8 +73,29 @@ defmodule BloggingWeb.PostLive.Show do
     current_user = socket.assigns.current_user
     post_author = socket.assigns.post.user
     UserFollowers.unfollow_user(current_user.id, post_author.id)
+    EmailSubscriptions.unsubscribe_user(post_author.id, current_user.id)
 
-    {:noreply, assign(socket, :is_following, false)}
+    {:noreply,
+     socket
+     |> assign(:is_subscribed, false)
+     |> assign(:is_following, false)}
+  end
+
+  def handle_event("subscribe", _params, socket) do
+    current_user = socket.assigns.current_user
+    post_author = socket.assigns.post.user
+
+    EmailSubscriptions.subscribe_user(post_author.id, current_user.id)
+
+    {:noreply, assign(socket, :is_subscribed, true)}
+  end
+
+  def handle_event("unsubscribe", _params, socket) do
+    current_user = socket.assigns.current_user
+    post_author = socket.assigns.post.user
+
+    EmailSubscriptions.unsubscribe_user(post_author.id, current_user.id)
+    {:noreply, assign(socket, :is_subscribed, false)}
   end
 
   def handle_event("toggle_bookmark", _params, socket) do
