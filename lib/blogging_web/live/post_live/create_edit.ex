@@ -13,25 +13,32 @@ defmodule BloggingWeb.PostLive.CreateEdit do
   end
 
   @impl true
-  def handle_params(%{"id" => id}, _url, socket) do
+  def handle_params(%{"id" => id}, url, socket) do
     post = Posts.get_post(id)
+
+    current_path = URI.parse(url).path
 
     {:noreply,
      socket
      |> assign(:page_title, "Edit Post")
      |> assign(:post, post)
+     |> assign(:current_path, current_path)
      |> assign(:action, :edit)
      |> assign(:user_id, post.user_id)
      |> assign(:html_content, post.html_content || "")}
   end
 
-  def handle_params(_params, _url, socket) do
+  def handle_params(_params, url, socket) do
     post = %Post{user_id: socket.assigns.user.id}
+
+    current_path = URI.parse(url).path
 
     {:noreply,
      socket
      |> assign(:page_title, "New Post")
      |> assign(:post, post)
+     |> assign(:current_path, current_path)
+
      |> assign(:action, :new)
      |> assign(:user_id, post.user_id)
      |> assign(:html_content, "")}
