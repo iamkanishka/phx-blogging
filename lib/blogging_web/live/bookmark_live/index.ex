@@ -27,10 +27,21 @@ defmodule BloggingWeb.BookmarkLive.Index do
      socket
      |> assign(:user_id, current_user.id)
       |> assign(:current_user, current_user)
+
      |> assign(:bookmarks, bookmarks)
      |> assign(:loaded_page, page)
      |> assign(:total_pages, total_pages)}
   end
+
+    @impl true
+  def handle_params(_unsigned_params, url, socket) do
+    current_path = URI.parse(url).path
+
+    {:noreply,
+     socket
+     |> assign(:current_path, current_path)}
+  end
+
 
   def handle_event("load-more", _params, socket) do
     page = socket.assigns.loaded_page + 1
