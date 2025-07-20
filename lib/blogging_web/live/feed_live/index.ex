@@ -27,12 +27,13 @@ defmodule BloggingWeb.FeedLive.Index do
     #  |> assign(:all_topics, @all_topics)}
   end
 
+
+
   @impl true
-  def handle_params(params, _url, socket) do
+  def handle_params(params, url, socket) do
     current_user = socket.assigns.current_user
 
-    IO.inspect(params, label: "FeedLive.Index params")
-
+    current_path = URI.parse(url).path
     page =
       case params do
         %{"feed" => "following"} ->
@@ -59,6 +60,7 @@ defmodule BloggingWeb.FeedLive.Index do
      assign(socket,
        active_tab: new_tab,
        posts: page.entries,
+       current_path: current_path,
        pagination: page
      )}
   end
