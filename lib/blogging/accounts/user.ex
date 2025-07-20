@@ -257,4 +257,54 @@ defmodule Blogging.Accounts.User do
       add_error(changeset, :current_password, "is not valid")
     end
   end
+
+
+
+
+  @doc """
+Returns an `%Ecto.Changeset{}` for updating the user's profile.
+
+## Examples
+
+    iex> change_user_profile(user)
+    %Ecto.Changeset{data: %User{}}
+"""
+def change_user_profile(%Blogging.Accounts.User{} = user, attrs \\ %{}) do
+  Blogging.Accounts.User.profile_changeset(user, attrs)
+end
+
+@doc """
+Updates the user's profile (username, bio, intrests).
+
+## Examples
+
+    iex> update_user_profile(user, %{username: "newname", bio: "hello"})
+    {:ok, %Blogging.Accounts.User{}}
+
+    iex> update_user_profile(user, %{username: nil})
+    {:error, %Ecto.Changeset{}}
+"""
+def update_user_profile(%Blogging.Accounts.User{} = user, attrs) do
+  user
+  |> Blogging.Accounts.User.profile_changeset(attrs)
+  |> Blogging.Repo.update()
+end
+
+
+# Inside Blogging.Accounts.User
+def profile_changeset(user, attrs) do
+  user
+  |> cast(attrs, [:username, :bio])
+  |> validate_required([:username, :bio])
+  |> validate_length(:username, min: 3, max: 50)
+  |> validate_length(:bio, max: 500)
+  # |> validate_change(:intrests, fn :intrests, value ->
+  #   if is_list(value) and Enum.all?(value, &is_binary/1), do: [], else: [intrests: "must be a list of strings"]
+  # end)
+  # |> unique_constraint(:username)
+end
+
+
+
+
 end
