@@ -24,8 +24,10 @@ defmodule BloggingWeb.PostLive.Show do
   end
 
   @impl true
-  def handle_params(%{"id" => id}, _, socket) do
+  def handle_params(%{"id" => id}, url, socket) do
     post = Posts.get_post(id)
+
+    current_path = URI.parse(url).path
 
     bookmarked =
       case Bookmarks.get_bookmark_by_user_and_post(socket.assigns.current_user.id, post.id) do
@@ -47,12 +49,12 @@ defmodule BloggingWeb.PostLive.Show do
         false
       end
 
-    IO.inspect(is_subscribed?, label: "Is Subscribed")
-
-    {:noreply,
+   {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
      |> assign(:post, post)
+     |> assign(:current_path, current_path)
+
      |> assign(:bookmarked?, bookmarked)
      |> assign(:is_subscribed, is_subscribed?)
      |> assign(:is_following, is_following?)}
