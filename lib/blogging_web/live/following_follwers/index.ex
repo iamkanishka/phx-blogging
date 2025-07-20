@@ -9,14 +9,23 @@ defmodule BloggingWeb.FollowingFollwers.Index do
   def mount(_params, session, socket) do
     current_user = Accounts.get_user_by_session_token(session["user_token"])
 
-    following_users= UserFollowers.list_followers_with_subscription(current_user.id, current_user.id )
+    following_users =
+      UserFollowers.list_followers_with_subscription(current_user.id, current_user.id)
 
     {:ok,
      socket
      |> assign(:current_user, current_user)
      |> assign(following_users: following_users)
      |> assign(following_count: length(following_users))}
+  end
 
+  @impl true
+  def handle_params(_unsigned_params, url, socket) do
+    current_path = URI.parse(url).path
+
+    {:noreply,
+     socket
+     |> assign(:current_path, current_path)}
   end
 
   @impl true
@@ -28,10 +37,9 @@ defmodule BloggingWeb.FollowingFollwers.Index do
     following_users = update_following(socket.assigns.following_users, index, true)
 
     {:noreply,
-    socket
+     socket
      |> assign(:following_users, following_users)
      |> assign(:following_count, socket.assigns.following_count + 1)}
-
   end
 
   def handle_event("unfollow", %{"user_id" => user_id, "index" => index_str}, socket) do
@@ -42,7 +50,7 @@ defmodule BloggingWeb.FollowingFollwers.Index do
     following_users = update_following(socket.assigns.following_users, index, false)
 
     {:noreply,
-    socket
+     socket
      |> assign(:following_users, following_users)
      |> assign(:following_count, socket.assigns.following_count - 1)}
   end
