@@ -153,61 +153,16 @@
   </main>
 
   <!-- Sidebar -->
-  <aside class="w-96 border-l px-6 py-6 hidden lg:block">
-    <div class="space-y-8">
-      <!--
-      <div>
-        <h3 class="text-lg font-semibold mb-4">Staff Picks</h3>
-        <ul class="space-y-4">
-          <li>
-            <p class="font-medium text-gray-800">The Introvert’s Guide to Creating a Social Life</p>
-            <p class="text-sm text-gray-500">In Zenite by Aster Lately</p>
-            <p class="text-xs text-gray-400 mt-1">✨ Mar 27</p>
-          </li>
-          <li>
-            <p class="font-medium text-gray-800">Confessions of a Poorly Drawn Cartoonist</p>
-            <p class="text-sm text-gray-500">In MuddyUm by Dan Piraro</p>
-            <p class="text-xs text-gray-400 mt-1">✨ Apr 24</p>
-          </li>
-          <li>
-            <p class="font-medium text-gray-800">Let’s Not Decide Who Kids Are Before They Do</p>
-            <p class="text-sm text-gray-500">In Psychology of Stuff by Nir Eyal</p>
-            <p class="text-xs text-gray-400 mt-1">✨ Jun 27</p>
-          </li>
-        </ul>
-      </div>
-    -->
+  <.live_component
+  module={BloggingWeb.ComponentsLive.SidebarBookmarksTopics}
+  id="sidebar-bookmarks-topics"
+  current_user_id={@current_user.id}
+  >
+</.live_component>
 
-    <div>
-  <h3 class="text-lg font-semibold mb-4">Your Recent Bookmark</h3>
-  <ul class="space-y-4">
-    <%= for bookmark <- @bookmarks do %>
-      <li>
-        <p class="font-medium text-gray-800">
-          <%= bookmark.post.title %>
-        </p>
-       
-        <p class="text-xs text-gray-400 mt-1">
-          ✨ <%= bookmark.inserted_at |> Timex.format!("%b %d", :strftime) %>
-        </p>
-      </li>
-    <% end %>
-  </ul>
-</div>
+  
 
-
-      <div>
-        <h3 class="text-lg font-semibold mb-4">Recommended topics</h3>
-        <div class="flex flex-wrap gap-2">
-          <%= for topic <- ["Software Engineering", "Flutter", "Typescript", "Product Management"] do %>
-            <span class="bg-gray-100 text-sm text-gray-700 px-3 py-1 rounded-full hover:bg-gray-200 cursor-pointer">
-              <%= topic %>
-            </span>
-          <% end %>
-        </div>
-      </div>
-    </div>
-  </aside>
+   
 </div>
  
 </.live_component>
