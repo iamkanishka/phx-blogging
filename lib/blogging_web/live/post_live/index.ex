@@ -11,6 +11,7 @@ alias Blogging.Accounts
     {:ok,
      socket
      |> assign(:posts, list_posts(current_user.id))
+      |> assign(:current_user, current_user)
 
       |> assign(:current_user_id, current_user.id)
      |> assign(:page_title, "Posts")
