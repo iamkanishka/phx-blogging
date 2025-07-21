@@ -69,9 +69,7 @@ defmodule Blogging.Contents.Posts.Posts do
   Supports optional pagination via `:page` and `:page_size` in `opts`.
   """
   def list_posts_by_user(user_id, opts \\ []) do
-    import Ecto.Query
-
-    page = Keyword.get(opts, :page, 1)
+   page = Keyword.get(opts, :page, 1)
     page_size = Keyword.get(opts, :page_size, 10)
     offset = (page - 1) * page_size
 
@@ -123,7 +121,7 @@ defmodule Blogging.Contents.Posts.Posts do
                published_only
              ),
              select: %{
-               p: p,
+               post: p,
                comments_count: coalesce(cc.count, 0),
                reactions: %{
                  "like" => coalesce(like_r.count, 0),
