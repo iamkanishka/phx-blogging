@@ -6,6 +6,8 @@ defmodule BloggingWeb.BookmarkLive.Index do
 
   @per_page 10
 
+  @impl true
+  @spec mount(any(), nil | maybe_improper_list() | map(), map()) :: {:ok, map()}
   def mount(_params, session, socket) do
     current_user = Accounts.get_user_by_session_token(session["user_token"])
 
