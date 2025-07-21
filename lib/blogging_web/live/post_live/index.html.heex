@@ -1,149 +1,61 @@
-
-
-<.live_component
-  module={BloggingWeb.ComponentsLive.Layout}
-  id="main-layout"
-  current_path={@current_path}
+<.live_component 
+  module={BloggingWeb.ComponentsLive.Layout} 
+  id="main-layout" 
+  current_path={@current_path} 
   user_name={@current_user.username}
- 
 >
-  
+  <div class="container mx-auto max-w-7xl py-8">
+    <.header>
+      My Posts
+      <:actions>
+        <.link 
+          patch={~p"/posts/new"} 
+          class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          New Post
+        </.link>
+      </:actions>
+    </.header>
 
+    <!-- lib/blogging_web/templates/page/index.html.heex -->
+    <div class="flex min-h-screen bg-white text-gray-900 font-sans">
 
-<div class="container mx-auto max-w-7xl  py-8">
-  <.header>
-    My Posts
-    <:actions>
-      <.link patch={~p"/posts/new"} class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-        New Post
-      </.link>
-    </:actions>
-  </.header>
+      <!-- Main Content -->
+      <main class="flex-1 mx-auto py-6">
 
-<!-- lib/blogging_web/templates/page/index.html.heex -->
-<div class="flex min-h-screen bg-white text-gray-900 font-sans">
-  <!-- Main Content -->
-  <main class="flex-1  mx-auto py-6">
-    <!-- Tabs 
-    <div class="flex space-x-6 border-b border-gray-200 pb-2">
-      <%= for tab <- ["Unpublished", "Published", "Reactions"] do %>
-        <button class={"text-sm font-medium " <> if(tab == "For you", do: "text-black border-b-2 border-black", else: "text-gray-500 hover:text-black")}><%= tab %></button>
-      <% end %>
-    </div>
-    -->
-
-    <!-- Articles -->
-    <div class="space-y-10 mt-6">
-    <%= for post <- @posts do %>
-    <.link patch={~p"/posts/#{post.p.id}"} class="text-blue-600 hover:text-blue-800">
-        
-    <.link patch={~p"/posts/#{post.p.id}"} >
-    <div class="flex border-b pb-6 ">
-      <div class="flex-1">
-        <p class="text-sm text-gray-500 mb-1">by <%= post.p.user.username %></p>
-        <h2 class="text-xl font-bold text-black"><%= post.p.title %></h2>
-        <p class="text-gray-700 mt-1"><%= post.p.sub_title  %></p>
-       
-
-        <div class="flex items-center text-sm text-gray-500 mt-2 space-x-4">
-  <!-- Post date -->
- 
-  <span><%= post.p.inserted_at |> Timex.format!("%b %d", :strftime) %></span>
-
-  <!-- Reactions -->
-  <div class="flex items-center space-x-3 ml-4">
-    <div class="flex items-center space-x-2" title="Like">
-      <span>👍</span>
-      <span>{post.reactions["like"]}</span>
-    </div>
-    <div class="flex items-center space-x-2" title="Love">
-      <span>❤️</span>
-      <span>{post.reactions["love"]}</span>
-    </div>
-    <div class="flex items-center space-x-2" title="Wow">
-      <span>😮</span>
-      <span>  {post.reactions["wow"]}</span>
-    </div>
-    <div class="flex items-center space-x-2" title="Laugh">
-      <span>😂</span>
-      <span>{post.reactions["laugh"]}</span>
-    </div>
-    <div class="flex items-center space-x-2" title="Sad">
-      <span>😢</span>
-      <span>{post.reactions["sad"]}</span>
-    </div>
-    <div class="flex items-center space-x-2" title="Angry">
-      <span>😡</span>
-      <span>{post.reactions["angry"]}</span>
-    </div>
-  </div>
-
-  <!-- Comments and Bookmark -->
-  <div class="flex items-center space-x-3 ml-4">
-    <div class="flex items-center space-x-2" title="Comments">
-      <span>💬</span>
-      <span>{post.comments_count}</span>
-    </div>
-    <div class="flex items-center space-x-2" title="Bookmark">
-      <span>🔖</span>
-      <span>{post.comments_count}</span>
-    </div>
-     <div class="flex items-center space-x-2" title="Bookmark">
-      <span>👁️</span>
-      <span>{post.p.view_count}</span>
-    </div>
-    </div>
-  </div>
-
-        
-      </div>
-    </div>
-  </.link>
-       </.link>
-    <% end %>
-
-
-    </div>
-  </main>
-
-  <!-- Sidebar -->
-  <aside class="w-96 border-l px-6 py-6 hidden lg:block">
-    <div class="space-y-8">
-      <div>
-        <h3 class="text-lg font-semibold mb-4">Staff Picks</h3>
-        <ul class="space-y-4">
-          <li>
-            <p class="font-medium text-gray-800">The Introvert’s Guide to Creating a Social Life</p>
-            <p class="text-sm text-gray-500">In Zenite by Aster Lately</p>
-            <p class="text-xs text-gray-400 mt-1">✨ Mar 27</p>
-          </li>
-          <li>
-            <p class="font-medium text-gray-800">Confessions of a Poorly Drawn Cartoonist</p>
-            <p class="text-sm text-gray-500">In MuddyUm by Dan Piraro</p>
-            <p class="text-xs text-gray-400 mt-1">✨ Apr 24</p>
-          </li>
-          <li>
-            <p class="font-medium text-gray-800">Let’s Not Decide Who Kids Are Before They Do</p>
-            <p class="text-sm text-gray-500">In Psychology of Stuff by Nir Eyal</p>
-            <p class="text-xs text-gray-400 mt-1">✨ Jun 27</p>
-          </li>
-        </ul>
-      </div>
-
-      <div>
-        <h3 class="text-lg font-semibold mb-4">Recommended topics</h3>
-        <div class="flex flex-wrap gap-2">
-          <%= for topic <- ["Software Engineering", "Flutter", "Typescript", "Product Management"] do %>
-            <span class="bg-gray-100 text-sm text-gray-700 px-3 py-1 rounded-full hover:bg-gray-200 cursor-pointer"><%= topic %></span>
+        <!-- Tabs -->
+        <!--
+        <div class="flex space-x-6 border-b border-gray-200 pb-2">
+          <%= for tab <- ["Unpublished", "Published", "Reactions"] do %>
+            <button class={
+              "text-sm font-medium " <> 
+              if(tab == "For you", do: "text-black border-b-2 border-black", else: "text-gray-500 hover:text-black")
+            }>
+              <%= tab %>
+            </button>
           <% end %>
         </div>
-      </div>
+        -->
+
+        <!-- Articles -->
+        <div class="space-y-10 mt-6">
+          <%= for {post, index} <- Enum.with_index(@posts) do %>
+            <.live_component 
+              module={BloggingWeb.ComponentsLive.PostCard} 
+              id={"post-topics" <> Integer.to_string(index)} 
+              post={post}
+            />
+          <% end %>
+        </div>
+
+      </main>
+
+      <!-- Sidebar -->
+      <.live_component 
+        module={BloggingWeb.ComponentsLive.SidebarBookmarksTopics} 
+        id="sidebar-bookmarks-topics" 
+        current_user_id={@current_user.id}
+      />
     </div>
-  </aside>
-</div>
-
-
-
-</div>
-
+  </div>
 </.live_component>
