@@ -23,8 +23,6 @@ defmodule BloggingWeb.FeedLive.Index do
      |> assign(:pagination, nil)
      |> assign_bookmark(current_user.id)
      |> assign(:all_topics, (current_user && @all_topics ++ current_user.intrests) || @all_topics)}
-
-    #  |> assign(:all_topics, @all_topics)}
   end
 
 
