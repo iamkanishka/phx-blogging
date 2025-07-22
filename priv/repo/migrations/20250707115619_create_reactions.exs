@@ -15,10 +15,10 @@ defmodule Blogging.Repo.Migrations.CreateReactions do
     create index(:reactions, [:user_id])
     create index(:reactions, [:reactable_type, :reactable_id])
 
-    create unique_index(
-      :reactions,
-      [:user_id, :reactable_type, :reactable_id],
-      name: :unique_user_reactable_reaction
-    )
+    # create unique_index(
+    #   :reactions,
+    #   [:user_id, :reactable_type, :reactable_id],
+    #   name: :unique_user_reactable_reaction
+    # )
   end
 end
