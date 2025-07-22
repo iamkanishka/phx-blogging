@@ -79,6 +79,17 @@
   </div>
 
   <hr class="my-2" />
+
+    <.live_component
+    module={BloggingWeb.PostLive.Components.Reaction}
+    id="reactions-#{@post.id}"
+    post_id={@post.id}
+    reactions={@reactions}
+    current_user={@current_user}
+   
+  />
+
+
   <!-- Reactions -->
   <div class="flex justify-between ">
     <div class="flex items-center space-x-2">
