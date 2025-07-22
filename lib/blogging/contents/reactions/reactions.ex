@@ -34,13 +34,14 @@ defmodule Blogging.Contents.Reactions.Reactions do
   @doc """
   Checks whether a user already reacted to a reactable.
   """
-  def user_reacted?(user_id, reactable_type, reactable_id) do
-    from(r in __MODULE__,
-      where:
-        r.user_id == ^user_id and
-          r.reactable_type == ^reactable_type and
-          r.reactable_id == ^reactable_id,
-      select: count(r.id) > 0
+  def user_reacted?(user_id, reactable_type, reactable_id, reaction_type) do
+    Reaction
+    |> where(
+      [r],
+      r.user_id == ^user_id and
+        r.reactable_type == ^reactable_type and
+        r.reactable_id == ^reactable_id and
+        r.type == ^reaction_type
     )
     |> Repo.one()
   end
@@ -54,13 +55,28 @@ defmodule Blogging.Contents.Reactions.Reactions do
     )
   end
 
-  def toggle_reaction(attrs) do
-    %Reaction{}
-    |> Reaction.changeset(attrs)
-    |> Repo.insert(
-      on_conflict: :nothing,
-      conflict_target: [:user_id, :reactable_type, :reactable_id]
-    )
+  def toggle_reaction(%{} = attrs) do
+    user_id = Map.get(attrs, "user_id") || Map.get(attrs, :user_id)
+    reactable_type = Map.get(attrs, "reactable_type") || Map.get(attrs, :reactable_type)
+    reactable_id = Map.get(attrs, "reactable_id") || Map.get(attrs, :reactable_id)
+    reaction_type = Map.get(attrs, "type") || Map.get(attrs, :type)
+
+    existing_reaction = user_reacted?(user_id, reactable_type, reactable_id, reaction_type)
+
+    case existing_reaction do
+      nil ->
+        %Reaction{}
+        |> Reaction.changeset(%{
+          user_id: user_id,
+          reactable_type: reactable_type,
+          reactable_id: reactable_id,
+          type: reaction_type
+        })
+        |> Repo.insert()
+
+      reaction ->
+        Repo.delete(reaction)
+    end
   end
 
   @doc """
@@ -93,8 +109,8 @@ defmodule Blogging.Contents.Reactions.Reactions do
     %Reaction{}
     |> Reaction.changeset(attrs)
     |> Repo.insert(
-      on_conflict: :replace_all,
-      conflict_target: [:user_id, :reactable_type, :reactable_id]
+      # on_conflict: :replace_all,
+      # conflict_target: [:user_id, :reactable_type, :reactable_id]
     )
   end
 
