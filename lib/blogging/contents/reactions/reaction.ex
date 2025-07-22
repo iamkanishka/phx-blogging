@@ -6,8 +6,6 @@ defmodule Blogging.Contents.Reactions.Reaction do
   alias Blogging.Contents.Posts.Post
   alias Blogging.Contents.Comments.Comment
 
-
-
   @reaction_types ~w(like love wow laugh sad angry)
 
   @primary_key {:id, :binary_id, autogenerate: true}
@@ -29,9 +27,9 @@ defmodule Blogging.Contents.Reactions.Reaction do
     |> validate_required([:type, :reactable_type, :reactable_id, :user_id])
     |> validate_inclusion(:type, @reaction_types)
     |> validate_inclusion(:reactable_type, ["post", "comment"])
-    |> unique_constraint([:user_id, :reactable_type, :reactable_id],
-      name: :unique_user_reactable_reaction
-    )
+    # |> unique_constraint([:user_id, :reactable_type, :reactable_id],
+    #   name: :unique_user_reactable_reaction
+    # )
     |> validate_reactable_exists()
   end
 
