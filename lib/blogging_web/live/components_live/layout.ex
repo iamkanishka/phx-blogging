@@ -38,7 +38,7 @@ defmodule BloggingWeb.ComponentsLive.Layout do
               <.icon name="hero-cog-6-tooth" class="h-6 w-6 text-zinc-900 hover:text-zinc-700" />
             </.link>
 
-            <.link href={~p"/users/log_out"} class="text-zinc-900 hover:text-zinc-700">
+            <.link href={~p"/users/logout"}   method="delete" class="text-zinc-900 hover:text-zinc-700">
               Logout
             </.link>
           </div>
