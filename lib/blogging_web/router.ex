@@ -84,7 +84,7 @@ defmodule BloggingWeb.Router do
   scope "/", BloggingWeb do
     pipe_through [:browser]
 
-    delete "/users/log_out", UserSessionController, :delete
+    delete "/users/logout", UserSessionController, :delete
 
     live_session :current_user,
       on_mount: [{BloggingWeb.UserAuth, :mount_current_user}] do
