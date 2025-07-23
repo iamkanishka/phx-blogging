@@ -18,6 +18,40 @@ defmodule Blogging.Contents.Reactions.Reactions do
 
   def get_reactable(_), do: nil
 
+  @reaction_types ~w(like love wow laugh sad angry)
+
+  def count_reactions_and_user_reaction(reactable_type, reactable_id, user_id) do
+    import Ecto.Query
+
+    # Count all reactions for given reactable
+    counts_query =
+      from(r in Blogging.Contents.Reactions.Reaction,
+        where: r.reactable_type == ^reactable_type and r.reactable_id == ^reactable_id,
+        group_by: r.type,
+        select: {r.type, count(r.id)}
+      )
+
+    # Get all reactions of user for given reactable
+    user_reactions_query =
+      from(r in Blogging.Contents.Reactions.Reaction,
+        where:
+          r.reactable_type == ^reactable_type and
+            r.reactable_id == ^reactable_id and
+            r.user_id == ^user_id,
+        select: r.type
+      )
+
+    counts = Blogging.Repo.all(counts_query) |> Enum.into(%{})
+    user_reacted_types = Blogging.Repo.all(user_reactions_query) |> MapSet.new()
+
+    user_reacted =
+      Enum.into(@reaction_types, %{}, fn type ->
+        {type, MapSet.member?(user_reacted_types, type)}
+      end)
+
+    %{counts: counts, user_reacted: user_reacted}
+  end
+
   @doc """
   Returns the total reaction counts grouped by type for a given reactable.
   """
@@ -157,4 +191,37 @@ defmodule Blogging.Contents.Reactions.Reactions do
     |> where([r], r.reactable_type == ^reactable_type and r.reactable_id == ^reactable_id)
     |> Repo.delete_all()
   end
+
+ def populate_data(user_id, post_id) do
+  Repo.transaction(fn ->
+    {:ok, comment} =
+      %Comment{}
+      |> Comment.changeset(%{content: "First comment", user_id: user_id, post_id: post_id})
+      |> Repo.insert()
+
+    {:ok, reply} =
+      %Comment{}
+      |> Comment.changeset(%{
+        content: "Reply to first",
+        user_id: user_id,
+        post_id: post_id,
+        parent_id: comment.id,
+        depth: 1
+      })
+      |> Repo.insert()
+
+    {:ok, _reply2} =
+      %Comment{}
+      |> Comment.changeset(%{
+        content: "Reply to reply",
+        user_id: user_id,
+        post_id: post_id,
+        parent_id: reply.id,
+        depth: 2
+      })
+      |> Repo.insert()
+  end)
+end
+
+
 end
