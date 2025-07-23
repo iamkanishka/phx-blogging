@@ -44,7 +44,7 @@ alias Blogging.Accounts
 
   defp list_posts(user_id) do
    data =  Posts.list_posts_by_user(user_id,  page: 1, page_size: 10)
-   IO.inspect(data, label: "Posts Data")
+  #  IO.inspect(data, label: "Posts Data")
    data
   end
 end
