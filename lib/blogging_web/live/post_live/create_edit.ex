@@ -51,9 +51,7 @@ defmodule BloggingWeb.PostLive.CreateEdit do
 
   @impl true
   def handle_event("quill-change", %{"html" => html, "text" => text}, socket) do
-    IO.inspect(html, label: "Quill HTML content")
-    # Update the changeset with the new HTML content
-    IO.inspect(text, label: "Quill Editor")
+     # Update the changeset with the new HTML content
 
     _changeset =
       Ecto.Changeset.change(socket.assigns.changeset.data, %{html_content: html})
