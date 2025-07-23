@@ -22,20 +22,16 @@ defmodule BloggingWeb.BookmarkLive.Index do
       end
 
     bookmarks = Bookmarks.list_user_bookmarks(current_user.id, page, @per_page)
-
-    IO.inspect(bookmarks, label: "Bookmarks in mount")
-
     {:ok,
      socket
      |> assign(:user_id, current_user.id)
-      |> assign(:current_user, current_user)
-
+     |> assign(:current_user, current_user)
      |> assign(:bookmarks, bookmarks)
      |> assign(:loaded_page, page)
      |> assign(:total_pages, total_pages)}
   end
 
-    @impl true
+  @impl true
   def handle_params(_unsigned_params, url, socket) do
     current_path = URI.parse(url).path
 
@@ -44,7 +40,7 @@ defmodule BloggingWeb.BookmarkLive.Index do
      |> assign(:current_path, current_path)}
   end
 
-
+  @impl true
   def handle_event("load-more", _params, socket) do
     page = socket.assigns.loaded_page + 1
     user_id = socket.assigns.user_id
