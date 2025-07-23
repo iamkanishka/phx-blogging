@@ -118,8 +118,7 @@ defmodule BloggingWeb.UserRegistrationLive do
         {:noreply, socket |> assign(trigger_submit: true) |> assign_form(changeset)}
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        IO.inspect(changeset.errors)
-        {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
+         {:noreply, socket |> assign(check_errors: true) |> assign_form(changeset)}
     end
   end
 
