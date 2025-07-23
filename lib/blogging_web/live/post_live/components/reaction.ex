@@ -20,10 +20,13 @@ defmodule BloggingWeb.PostLive.Components.Reaction do
           phx-click="react"
           phx-target={@myself}
           phx-value-type={type}
-          class="flex items-center space-x-0.5 p-1 rounded"
+          class={[
+            "flex items-center space-x-0.5 p-1 rounded",
+            @reactions.user_reacted[type] && "underline font-semibold text-blue-600"
+          ]}
           title={type}
         >
-          <span>{emoji}</span> <span class="text-sm">{@reactions[type] || 0}</span>
+          <span>{emoji}</span> <span class="text-sm">{@reactions.counts[type] || 0}</span>
         </button>
       <% end %>
     </div>
@@ -53,7 +56,7 @@ defmodule BloggingWeb.PostLive.Components.Reaction do
           user_id: user.id
         }
 
-        IO.inspect(attrs, label: "Reaction Attributes")
+        # IO.inspect(attrs, label: "Reaction Attributes")
 
         case Reactions.toggle_reaction(attrs) do
           {:ok, _reaction} ->
@@ -63,7 +66,7 @@ defmodule BloggingWeb.PostLive.Components.Reaction do
             {:noreply, socket}
 
           {:error, changeset} ->
-            IO.inspect(changeset, label: "Reaction Error")
+            # IO.inspect(changeset, label: "Reaction Error")
             {:noreply, put_flash(socket, :error, "Could not add reaction")}
         end
     end
