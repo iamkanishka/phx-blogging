@@ -120,8 +120,6 @@ defmodule BloggingWeb.NotificationLive.Index do
   end
 
   defp list_posts(user_id) do
-    data = Posts.list_posts_by_user(user_id, page: 1, page_size: 10)
-    IO.inspect(data, label: "Posts Data")
-    data
+     Posts.list_posts_by_user(user_id, page: 1, page_size: 10)
   end
 end
