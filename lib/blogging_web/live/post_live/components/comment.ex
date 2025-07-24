@@ -1,6 +1,7 @@
 defmodule BloggingWeb.PostLive.Components.Comment do
   use BloggingWeb, :live_component
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="comment  p-1">
