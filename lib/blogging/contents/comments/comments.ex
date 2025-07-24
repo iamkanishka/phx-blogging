@@ -16,6 +16,159 @@ defmodule Blogging.Contents.Comments.Comments do
   # Public API
   # ----------------------------------------------------------------------------
 
+ def get_comments(post_id, current_user_id, limit \\ 5, offset \\ 0) do
+  base_query =
+    from c in Comment,
+      where: c.post_id == ^post_id and is_nil(c.parent_id),
+      join: u in assoc(c, :user),
+      order_by: [desc: c.inserted_at],
+      limit: ^limit,
+      offset: ^offset,
+      select: %{
+        id: c.id,
+        content: c.content,
+        inserted_at: c.inserted_at,
+        updated_at: c.updated_at,
+        depth: c.depth,
+        parent: c.parent_id,
+        user: %{
+          id: u.id,
+          email: u.email,
+          username: u.username
+        }
+      }
+
+  comments = Blogging.Repo.all(base_query)
+
+  Enum.map(comments, fn comment ->
+    reaction_counts = get_reaction_counts("comment", comment.id)
+    user_reacted = get_user_reaction("comment", comment.id, current_user_id)
+
+    Map.put(comment, :reaction_data, %{
+      counts: reaction_counts,
+      user_reacted: user_reacted
+    })
+  end)
+end
+
+
+  #   def get_top_comments(post_id, current_user_id, limit \\ 5) do
+  #   # limit = Keyword.get(opts, :limit, 5)
+
+  #   base_query =
+  #     from c in Comment,
+  #       where: c.post_id == ^post_id and is_nil(c.parent_id),
+  #       order_by: [desc: c.inserted_at],
+  #       limit: ^limit,
+  #       preload: [:user]
+
+  #   comments = Blogging.Repo.all(base_query)
+
+  #   Enum.map(comments, fn comment ->
+  #     reaction_counts = get_reaction_counts("comment", comment.id)
+  #     user_reacted = get_user_reaction("comment", comment.id, current_user_id)
+
+  #     Map.put(comment, :reaction_data, %{
+  #       counts: reaction_counts,
+  #       user_reacted: user_reacted
+  #     })
+  #   end)
+  # end
+def get_replies(comment_id, current_user_id, limit \\ 3, offset \\ 0) do
+  base_query =
+    from r in Comment,
+      where: r.parent_id == ^comment_id,
+      join: u in assoc(r, :user),
+      order_by: [asc: r.inserted_at],
+      limit: ^limit,
+      offset: ^offset,
+      select: %{
+        id: r.id,
+        content: r.content,
+        inserted_at: r.inserted_at,
+        updated_at: r.updated_at,
+        depth: r.depth,
+        parent: r.parent_id,
+        user: %{
+          id: u.id,
+          email: u.email,
+          username: u.username
+        }
+      }
+
+  replies = Blogging.Repo.all(base_query)
+
+  Enum.map(replies, fn reply ->
+    reaction_counts = get_reaction_counts("comment", reply.id)
+    user_reacted = get_user_reaction("comment", reply.id, current_user_id)
+
+    Map.put(reply, :reaction_data, %{
+      counts: reaction_counts,
+      user_reacted: user_reacted
+    })
+  end)
+end
+
+
+  defp get_reaction_counts(reactable_type, reactable_id) do
+    from(r in Blogging.Contents.Reactions.Reaction,
+      where: r.reactable_type == ^reactable_type and r.reactable_id == ^reactable_id,
+      group_by: r.type,
+      select: {r.type, count(r.id)}
+    )
+    |> Blogging.Repo.all()
+    # Returns map like %{"like" => 3, "love" => 2, ...}
+    |> Enum.into(%{})
+  end
+
+  defp get_user_reaction(reactable_type, reactable_id, user_id) do
+    from(r in Blogging.Contents.Reactions.Reaction,
+      where:
+        r.reactable_type == ^reactable_type and r.reactable_id == ^reactable_id and
+          r.user_id == ^user_id,
+      select: r.type
+    )
+    |> Blogging.Repo.one()
+  end
+
+  #   # Get top-level comments with replies (limited if needed)
+  # def get_top_comments(post_id, opts \\ []) do
+  #   limit = Keyword.get(opts, :limit, 5)
+
+  #   Comment
+  #   |> where([c], c.post_id == ^post_id and is_nil(c.parent_id))
+  #   |> order_by([c], desc: c.inserted_at)
+  #   |> limit(^limit)
+  #   |> preload([:user, :reactions])
+  #   |> Blogging.Repo.all()
+  # end
+
+  # def get_replies(comment_id, limit \\ 3) do
+  #   Comment
+  #   |> where([r], r.parent_id == ^comment_id)
+  #   |> order_by([r], asc: r.inserted_at)
+  #   |> limit(^limit)
+  #   |> preload([:user, :reactions])
+  #   |> Blogging.Repo.all()
+  # end
+
+  # def count_replies(comment_id) do
+  #   Comment
+  #   |> where([r], r.parent_id == ^comment_id)
+  #   |> select([r], count(r.id))
+  #   |> Blogging.Repo.one()
+  # end
+
+  # def count_comments(post_id) do
+  #   from(c in Comment, where: c.post_id == ^post_id)
+  #   |> Blogging.Repo.aggregate(:count, :id)
+  # end
+
+  # def count_top_level_comments(post_id) do
+  #   from(c in Comment, where: c.post_id == ^post_id and is_nil(c.parent_id))
+  #   |> Blogging.Repo.aggregate(:count, :id)
+  # end
+
   @doc """
   Returns all comments for a given post, preloading replies and user.
   """
