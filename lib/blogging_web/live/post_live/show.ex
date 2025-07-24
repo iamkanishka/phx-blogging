@@ -1,4 +1,5 @@
 defmodule BloggingWeb.PostLive.Show do
+  alias Blogging.Contents.Comments.Comments
   alias Blogging.Contents.Reactions.Reactions
   alias Blogging.Accounts.EmailSubscriptions
   alias Blogging.Contents.Bookmarks.Bookmarks
@@ -42,21 +43,7 @@ defmodule BloggingWeb.PostLive.Show do
     post =
       Posts.get_post(id)
       |> Blogging.Repo.preload([
-        :user,
-        reactions: [:user],
-        comments: [
-          :user,
-          :reactions,
-          replies: [
-            :user,
-            :reactions,
-            replies: [
-              :user,
-              :reactions
-              # continue nesting if you expect deeper levels
-            ]
-          ]
-        ]
+        :user
       ])
 
     current_path = URI.parse(url).path
@@ -88,17 +75,15 @@ defmodule BloggingWeb.PostLive.Show do
         socket.assigns.current_user && socket.assigns.current_user.id
       )
 
-    # IO.inspect(post.reactions, label: "Reactions")
-
-    # Load initial comments with offset
     comments =
-      build_comment_tree_with_offset(
-        post.comments,
-        socket.assigns.comment_offset,
-        socket.assigns.comments_per_load
+      Comments.get_comments(
+        post.id,
+        socket.assigns.current_user && socket.assigns.current_user.id,
+        socket.assigns.comments_per_load,
+        socket.assigns.comment_offset
       )
 
-    total_comments = length(post.comments)
+    IO.inspect(comments, label: "Loaded Comments")
 
     {:noreply,
      socket
@@ -110,7 +95,7 @@ defmodule BloggingWeb.PostLive.Show do
      |> assign(:is_following, is_following?)
      |> assign(:reactions, reactions)
      |> assign(:comments, comments)
-     |> assign(:total_comments, total_comments)}
+     |> assign(:total_comments, 100)}
   end
 
   @impl true
@@ -154,10 +139,18 @@ defmodule BloggingWeb.PostLive.Show do
   def handle_event("load-more-comments", _params, socket) do
     new_offset = socket.assigns.comment_offset + socket.assigns.comments_per_load
 
+    new_comments =
+      Comments.get_comments(
+        socket.assigns.post.id,
+        socket.assigns.current_user && socket.assigns.current_user.id,
+        socket.assigns.comments_per_load,
+        new_offset
+      )
+
     comments =
       build_comment_tree_with_offset(
-        socket.assigns.post.comments,
-        new_offset,
+        new_comments,
+        socket.assigns.comment_offset,
         socket.assigns.comments_per_load
       )
 
@@ -165,31 +158,6 @@ defmodule BloggingWeb.PostLive.Show do
 
     {:noreply,
      socket |> assign(:comments, updated_comments) |> assign(:comment_offset, new_offset)}
-  end
-
-  def handle_event("load-more-replies", %{"comment-id" => comment_id}, socket) do
-    comment = Enum.find(socket.assigns.comments, &(&1.id == String.to_integer(comment_id)))
-
-    if comment do
-      new_replies =
-        Enum.filter(socket.assigns.post.comments, &(&1.parent_id == comment.id))
-        |> Enum.sort_by(& &1.inserted_at, {:desc, NaiveDateTime})
-        |> Enum.drop(length(comment.replies))
-        |> Enum.take(socket.assigns.comments_per_load)
-        # Simplified for this example
-        |> Enum.map(&add_replies(&1, %{}))
-
-      updated_comment = %{comment | replies: comment.replies ++ new_replies}
-
-      updated_comments =
-        Enum.map(socket.assigns.comments, fn c ->
-          if c.id == updated_comment.id, do: updated_comment, else: c
-        end)
-
-      {:noreply, assign(socket, :comments, updated_comments)}
-    else
-      {:noreply, socket}
-    end
   end
 
   def handle_event("load-comments", _params, socket) do
@@ -219,37 +187,14 @@ defmodule BloggingWeb.PostLive.Show do
       Posts.get_post(socket.assigns.post.id)
       |> Blogging.Repo.preload(comments: [:user, :reactions, :replies])
 
-    comments =
-      build_comment_tree_with_offset(
-        post.comments,
-        socket.assigns.comment_offset,
-        socket.assigns.comments_per_load
-      )
+    # comments =
+    #   build_comment_tree_with_offset(
+    #     post.comments,
+    #     socket.assigns.comment_offset,
+    #     socket.assigns.comments_per_load
+    #   )
 
     {:noreply, assign(socket, :comments, comments)}
-  end
-
-  # Keep existing follow/unfollow, subscribe/unsubscribe, bookmark handlers
-  # ... (they remain the same)
-
-  defp build_comment_tree_with_offset(comments, offset, limit) do
-    comments_by_id = Enum.group_by(comments, & &1.id)
-
-    comments
-    |> Enum.filter(&is_nil(&1.parent_id))
-    |> Enum.sort_by(& &1.inserted_at, {:desc, NaiveDateTime})
-    |> Enum.drop(offset)
-    |> Enum.take(limit)
-    |> Enum.map(&add_replies(&1, comments_by_id))
-  end
-
-  defp add_replies(comment, comments_by_id) do
-    replies =
-      (comments_by_id[comment.id] || [])
-      |> Enum.flat_map(& &1.replies)
-      |> Enum.map(&add_replies(&1, comments_by_id))
-
-    %{comment | replies: replies}
   end
 
   defp page_title(:show), do: "Show Post"
