@@ -85,6 +85,26 @@ defmodule BloggingWeb.PostLive.Show do
 
     IO.inspect(comments, label: "Loaded Comments")
 
+    replies =
+      Comments.get_replies(
+        List.first(comments).id,
+        socket.assigns.current_user && socket.assigns.current_user.id,
+        socket.assigns.comments_per_load,
+        socket.assigns.comment_offset
+      )
+
+    IO.inspect(replies, label: "Loaded Replies")
+
+    replies_two =
+      Comments.get_replies(
+        List.first(replies).id,
+        socket.assigns.current_user && socket.assigns.current_user.id,
+        socket.assigns.comments_per_load,
+        socket.assigns.comment_offset
+      )
+
+    IO.inspect(replies_two, label: "Loaded Replies two 2")
+
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
@@ -182,19 +202,126 @@ defmodule BloggingWeb.PostLive.Show do
   end
 
   @impl true
-  def handle_info(%{event: "new_comment", payload: %{comment: comment}}, socket) do
-    post =
-      Posts.get_post(socket.assigns.post.id)
-      |> Blogging.Repo.preload(comments: [:user, :reactions, :replies])
+  def handle_info(%{event: "new_comment", payload: %{comment: new_comment}}, socket) do
+    updated_comments =
+      insert_comment_into_tree(
+        socket.assigns.comments,
+        new_comment
+      )
 
-    # comments =
-    #   build_comment_tree_with_offset(
-    #     post.comments,
-    #     socket.assigns.comment_offset,
-    #     socket.assigns.comments_per_load
-    #   )
+    {:noreply, assign(socket, :comments, updated_comments)}
+  end
 
-    {:noreply, assign(socket, :comments, comments)}
+  #   BloggingWeb.Endpoint.broadcast(
+  #   "comments:post:#{post_id}",
+  #   "new_comment",
+  #   %{comment: new_comment}
+  # )
+
+  defp insert_comment_into_tree(comments, new_comment) do
+    # Top-level comment
+    if is_nil(new_comment.parent) do
+      [Map.put(new_comment, :replies, []) | comments]
+    else
+      Enum.map(comments, fn comment ->
+        if comment.id == new_comment.parent do
+          replies = (comment.replies || []) ++ [Map.put(new_comment, :replies, [])]
+          Map.put(comment, :replies, replies)
+        else
+          Map.update(comment, :replies, [], fn child_replies ->
+            insert_comment_into_tree(child_replies, new_comment)
+          end)
+        end
+      end)
+    end
+  end
+
+  @impl true
+  def handle_info(%{event: "update_comment", payload: %{comment: updated_comment}}, socket) do
+    updated_comments =
+      update_comment_in_tree(
+        socket.assigns.comments,
+        updated_comment
+      )
+
+    {:noreply, assign(socket, :comments, updated_comments)}
+  end
+
+  # BloggingWeb.Endpoint.broadcast(
+  #   "comments:post:#{post_id}",
+  #   "update_comment",
+  #   %{comment: updated_comment}
+  # )
+
+  defp update_comment_in_tree(comments, updated_comment) do
+    Enum.map(comments, fn comment ->
+      cond do
+        comment.id == updated_comment.id ->
+          Map.merge(comment, updated_comment)
+
+        Map.has_key?(comment, :replies) ->
+          Map.update!(comment, :replies, fn replies ->
+            update_comment_in_tree(replies, updated_comment)
+          end)
+
+        true ->
+          comment
+      end
+    end)
+  end
+
+  @impl true
+  def handle_info(%{event: "add_reaction", payload: %{comment: updated_comment}}, socket) do
+    updated_comments =
+      update_reaction_in_tree(
+        socket.assigns.comments,
+        updated_comment.id,
+        updated_comment.reaction_data
+      )
+
+    {:noreply, assign(socket, :comments, updated_comments)}
+  end
+
+  # BloggingWeb.Endpoint.broadcast(
+  #   "comments:post:#{post_id}",
+  #   "add_reaction",
+  #   %{comment: %{id: comment.id, reaction_data: updated_reaction_data}}
+  # )
+
+  defp update_reaction_in_tree(comments, target_id, new_reaction_data) do
+    Enum.map(comments, fn comment ->
+      cond do
+        comment.id == target_id ->
+          Map.put(comment, :reaction_data, new_reaction_data)
+
+        Map.has_key?(comment, :replies) ->
+          updated_replies = update_reaction_in_tree(comment.replies, target_id, new_reaction_data)
+          Map.put(comment, :replies, updated_replies)
+
+        true ->
+          comment
+      end
+    end)
+  end
+
+  defp build_comment_tree_with_offset(comments, offset, limit) do
+    comments_by_id = Enum.group_by(comments, & &1.id)
+
+    comments
+    |> Enum.filter(&is_nil(&1.parent_id))
+    |> Enum.sort_by(& &1.inserted_at, {:desc, NaiveDateTime})
+    |> Enum.drop(offset)
+    |> Enum.take(limit)
+    |> Enum.map(&add_replies(&1, comments_by_id))
+  end
+
+  defp add_replies(comment, comments_by_id) do
+    replies =
+      (comments_by_id[comment.id] || [])
+      |> Enum.flat_map(& &1.replies)
+      |> Enum.map(&add_replies(&1, comments_by_id))
+
+    %{comment | replies: replies}
   end
 
   defp page_title(:show), do: "Show Post"
