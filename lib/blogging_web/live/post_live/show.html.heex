@@ -144,8 +144,10 @@
   <h1 class="text-2xl font-bold mb-4">Comments</h1>
 <div class="comments space-y-4" id="comments">
   <%= for comment <- @comments do %>
+  <!--
     <.live_component module={BloggingWeb.PostLive.Components.Comment} id={"comment-#{comment.id}"} comment={comment} />
-  <% end %>
+  -->
+    <% end %>
   <%= if length(@comments) < @total_comments do %>
     <div class="text-center mt-4">
       <a href="#" phx-click="load-more-comments" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">See more comments</a>
