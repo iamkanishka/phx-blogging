@@ -65,7 +65,7 @@ defmodule BloggingWeb.PostLive.Components.Reaction do
             BloggingWeb.Endpoint.broadcast(topic, "new_reaction", %{})
             {:noreply, socket}
 
-          {:error, changeset} ->
+          {:error, _changeset} ->
             # IO.inspect(changeset, label: "Reaction Error")
             {:noreply, put_flash(socket, :error, "Could not add reaction")}
         end
