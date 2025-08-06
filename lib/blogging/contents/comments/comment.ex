@@ -10,14 +10,16 @@ defmodule Blogging.Contents.Comments.Comment do
     field :content, :string
     field :depth, :integer, default: 0
     # Optional if you later add path-based traversal
-    # field :path, :string
+    field :path, :string
 
     belongs_to :user, Blogging.Accounts.User
     belongs_to :post, Blogging.Contents.Posts.Post
     belongs_to :parent, Comment
 
     has_many :replies, Comment, foreign_key: :parent_id
-    has_many :reactions, Blogging.Contents.Reactions.Reaction, foreign_key: :reactable_id,
+
+    has_many :reactions, Blogging.Contents.Reactions.Reaction,
+      foreign_key: :reactable_id,
       where: [reactable_type: "comment"]
 
     timestamps()
@@ -33,7 +35,7 @@ defmodule Blogging.Contents.Comments.Comment do
     |> foreign_key_constraint(:post_id, name: "comments_post_id_fkey")
     |> foreign_key_constraint(:parent_id, name: "comments_parent_id_fkey")
     |> validate_and_set_depth()
-    # |> set_path()
+   |> set_path()
   end
 
   defp validate_and_set_depth(changeset) do
@@ -52,6 +54,32 @@ defmodule Blogging.Contents.Comments.Comment do
         %Comment{depth: parent_depth} ->
           put_change(changeset, :depth, parent_depth + 1)
       end
+    end
+  end
+
+
+
+  defp set_path(changeset) do
+    case get_change(changeset, :parent_id) do
+      nil ->
+        # Root comment: path is its own ID
+        case changeset.data.id || get_field(changeset, :id) do
+          # ID not available yet
+          nil -> changeset
+          id -> put_change(changeset, :path, to_string(id))
+        end
+
+      parent_id ->
+        case Blogging.Repo.get(Comment, parent_id) do
+          nil ->
+            changeset
+
+          %Comment{path: parent_path} ->
+            case get_field(changeset, :id) do
+              nil -> changeset
+              id -> put_change(changeset, :path, "#{parent_path}.#{id}")
+            end
+        end
     end
   end
 
