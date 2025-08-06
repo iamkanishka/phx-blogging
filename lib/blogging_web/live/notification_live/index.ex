@@ -89,8 +89,6 @@ defmodule BloggingWeb.NotificationLive.Index do
      |> assign(:posts, list_posts(current_user.id))
      |> assign(:current_user_id, current_user.id)
      |> assign(:current_user, current_user)
-
-
      |> assign(:activities, activities)
      |> assign(:page_title, "Posts")
      |> assign(:pagination, nil)}
@@ -98,12 +96,12 @@ defmodule BloggingWeb.NotificationLive.Index do
 
   @impl true
   def handle_params(params, url, socket) do
-     current_path = URI.parse(url).path
+    current_path = URI.parse(url).path
 
     {:noreply,
      socket
      |> assign(:current_path, current_path)
-     |>  apply_action(socket.assigns.live_action, params)}
+     |> apply_action(socket.assigns.live_action, params)}
   end
 
   defp apply_action(socket, :index, _params) do
@@ -120,6 +118,6 @@ defmodule BloggingWeb.NotificationLive.Index do
   end
 
   defp list_posts(user_id) do
-     Posts.list_posts_by_user(user_id, page: 1, page_size: 10)
+    Posts.list_posts_by_user(user_id, page: 1, page_size: 10)
   end
 end
