@@ -10,151 +10,136 @@
 </.header>
 -->
 
-<.live_component
-  module={BloggingWeb.ComponentsLive.Layout}
-  id="main-layout"
-  current_path={@current_path}
-  user_name={@current_user.username}
->
-  
+<.live_component module={BloggingWeb.ComponentsLive.Layout} id="main-layout" current_path={@current_path}
+  user_name={@current_user.username}>
 
 
-<div class="max-w-4xl mx-auto px-4 py-10">
-  <div class="py-4"></div>
-  <!-- Title -->
-  <h1
-    class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-6"
-  >
-    {@post.title}
-  </h1>
 
-  <!-- Author Info Section -->
-  <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
-    <!-- Author Avatar -->
-    <div
-      class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold text-lg"
-    >
-      <%= @post.user.username |> String.first() |> String.upcase() %>
-    </div>
+  <div class="max-w-4xl mx-auto px-4 py-10">
+    <div class="py-4"></div>
+    <!-- Title -->
+    <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-6">
+      {@post.title}
+    </h1>
 
-    <!-- Author Meta -->
-    <div class="flex items-center gap-2 flex-wrap">
-      <span class="font-medium text-gray-800"> {@post.user.username}</span>
-
-      <%= if @current_user && @current_user.id != @post.user.id do %>
-      <div>
-        <%= if @is_following do %>
-
-        <button
-          phx-click="unfollow"
-          class="px-4 py-1 border border-gray-400 rounded-full text-sm font-medium hover:bg-gray-100 transition"
-        >
-          Unfollow
-        </button>
-        <% else %>
-
-        <button
-          phx-click="follow"
-          class="px-4 py-1 border border-gray-400 rounded-full text-sm font-medium hover:bg-gray-100 transition"
-        >
-          Follow
-        </button>
-        <% end %>
+    <!-- Author Info Section -->
+    <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
+      <!-- Author Avatar -->
+      <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-semibold text-lg">
+        <%= @post.user.username |> String.first() |> String.upcase() %>
       </div>
-      <% end %>
-   <%= if @is_following do %>
-       <button
-        phx-click={if @is_subscribed, do: "unsubscribe", else: "subscribe"}
-        phx-value-user_id={@post.user.id}
-      
-      >
-        <.icon name={if @is_subscribed, do: "hero-envelope-solid", else: "hero-envelope"} class="w-5 h-5" />
-      </button>
-      <% end %>
+
+      <!-- Author Meta -->
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="font-medium text-gray-800"> {@post.user.username}</span>
+
+        <%= if @current_user && @current_user.id !=@post.user.id do %>
+          <div>
+            <%= if @is_following do %>
+
+              <button phx-click="unfollow"
+                class="px-4 py-1 border border-gray-400 rounded-full text-sm font-medium hover:bg-gray-100 transition">
+                Unfollow
+              </button>
+              <% else %>
+
+                <button phx-click="follow"
+                  class="px-4 py-1 border border-gray-400 rounded-full text-sm font-medium hover:bg-gray-100 transition">
+                  Follow
+                </button>
+                <% end %>
+          </div>
+          <% end %>
+            <%= if @is_following do %>
+              <button phx-click={if @is_subscribed, do: "unsubscribe" , else: "subscribe" }
+                phx-value-user_id={@post.user.id}>
+                <.icon name={if @is_subscribed, do: "hero-envelope-solid" , else: "hero-envelope" } class="w-5 h-5" />
+              </button>
+              <% end %>
 
 
-      <span>•</span>
-      <span><%= @post.inserted_at |> Timex.format!("%b %d", :strftime) %></span>
-    </div>
-  </div>
-
-  <hr class="my-2" />
-
-
-
-  <!-- Reactions -->
-  <div class="flex justify-between ">
-
-    
-    <.live_component
-    module={BloggingWeb.PostLive.Components.Reaction}
-    id="reactions-#{@post.id}"
-    post_id={@post.id}
-    reactions={@reactions}
-    current_user={@current_user}
-   
-  />
-    
-
-    <!-- Comments and Bookmark -->
-    <div class="flex items-center space-x-3 ml-4">
-      <div class="flex items-center space-x-0.5" title="Comments">
-        <span><.icon name="hero-chat-bubble-bottom-center-text"/> </span>
-        <span> 0</span>
-      </div>
-      <div class="flex items-center space-x-0.5" title="Bookmark">
-        <span><.icon name="hero-eye"/> </span>
-        <span> 0 </span>
-      </div>
-      <div
-        class="flex items-center space-x-2 cursor-pointer hover:text-yellow-500"
-        phx-click="toggle_bookmark"
-        title="Bookmark"
-      >
-        <span>
-          <.icon name={if @bookmarked?, do: "hero-bookmark-solid", else:
-          "hero-bookmark"} />
-        </span>
+                <span>•</span>
+                <span>
+                  <%= @post.inserted_at |> Timex.format!("%b %d", :strftime) %>
+                </span>
       </div>
     </div>
-  </div>
-  <hr class="my-2" />
 
-  <!-- Subtitle -->
-  <p class="text-lg text-gray-700">{@post.sub_title}</p>
+    <hr class="my-2" />
 
-  <p class="mb-4"><%= raw @post.html_content %></p>
 
-  <div class="mt-6">
-    <div class="flex flex-wrap gap-2">
-      <%= for topic <- @post.tags do %>
-      <span class="bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full">
-        {topic}
-      </span>
-      <% end %>
+
+    <!-- Reactions -->
+    <div class="flex justify-between ">
+
+
+      <.live_component module={BloggingWeb.PostLive.Components.Reaction} id="reactions-#{@post.id}" post_id={@post.id}
+        reactions={@reactions} current_user={@current_user} />
+
+
+      <!-- Comments and Bookmark -->
+      <div class="flex items-center space-x-3 ml-4">
+        <div class="flex items-center space-x-0.5" title="Comments">
+          <span>
+            <.icon name="hero-chat-bubble-bottom-center-text" />
+          </span>
+          <span> 0</span>
+        </div>
+        <div class="flex items-center space-x-0.5" title="Bookmark">
+          <span>
+            <.icon name="hero-eye" />
+          </span>
+          <span> 0 </span>
+        </div>
+        <div class="flex items-center space-x-2 cursor-pointer hover:text-yellow-500" phx-click="toggle_bookmark"
+          title="Bookmark">
+          <span>
+            <.icon name={if @bookmarked?, do: "hero-bookmark-solid" , else: "hero-bookmark" } />
+          </span>
+        </div>
+      </div>
+    </div>
+    <hr class="my-2" />
+
+    <!-- Subtitle -->
+    <p class="text-lg text-gray-700">{@post.sub_title}</p>
+
+    <p class="mb-4">
+      <%= raw @post.html_content %>
+    </p>
+
+    <div class="mt-6">
+      <div class="flex flex-wrap gap-2">
+        <%= for topic <- @post.tags do %>
+          <span class="bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full">
+            {topic}
+          </span>
+          <% end %>
+      </div>
     </div>
   </div>
-</div>
 
 
 
-<.modal  id="commnets-modal" show on_cancel={JS.patch(~p"/posts/#{@post.id}")}>
- <button phx-click="load-comments" type="button"> Load commnets </button>
-
-  <h1 class="text-2xl font-bold mb-4">Comments</h1>
-<div class="comments space-y-4" id="comments">
-  <%= for comment <- @comments do %>
-  <!--
-    <.live_component module={BloggingWeb.PostLive.Components.Comment} id={"comment-#{comment.id}"} comment={comment} />
+  <.modal id="commnets-modal" show on_cancel={JS.patch(~p"/posts/#{@post.id}")}>
+    <!--
+ <button phx-click="load-comments" type="button"> Load commets </button>
   -->
-    <% end %>
-  <%= if length(@comments) < @total_comments do %>
-    <div class="text-center mt-4">
-      <a href="#" phx-click="load-more-comments" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">See more comments</a>
+    <h1 class="text-2xl font-bold mb-4">Comments</h1>
+    <div class="comments space-y-4 h-[350px] overflow-x-auto overflow-y-auto" id="comments">
+      <%= for comment <- @comments do %>
+
+        <.live_component module={BloggingWeb.PostLive.Components.Comment} id={"comment-#{comment.id}"}
+          comment={comment} />
+
+        <% end %>
+          <%= if length(@comments) < @total_comments and @comments_has_next do %>
+            <div class=" mt-4">
+              <a href="#" phx-click="load-more-comments" class="text-blue-500 hover:text-blue-700 text-sm">See more
+                comments</a>
+            </div>
+            <% end %>
     </div>
-  <% end %>
-</div>
-</.modal>
+  </.modal>
 
 </.live_component>
-
