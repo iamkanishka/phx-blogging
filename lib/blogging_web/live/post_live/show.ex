@@ -75,7 +75,7 @@ defmodule BloggingWeb.PostLive.Show do
         socket.assigns.current_user && socket.assigns.current_user.id
       )
 
-    comments =
+    %{comments: comments_list, has_next: has_next} =
       Comments.get_comments(
         post.id,
         socket.assigns.current_user && socket.assigns.current_user.id,
@@ -83,27 +83,7 @@ defmodule BloggingWeb.PostLive.Show do
         socket.assigns.comment_offset
       )
 
-    IO.inspect(comments, label: "Loaded Comments")
-
-    replies =
-      Comments.get_replies(
-        List.first(comments).id,
-        socket.assigns.current_user && socket.assigns.current_user.id,
-        socket.assigns.comments_per_load,
-        socket.assigns.comment_offset
-      )
-
-    IO.inspect(replies, label: "Loaded Replies")
-
-    replies_two =
-      Comments.get_replies(
-        List.first(replies).id,
-        socket.assigns.current_user && socket.assigns.current_user.id,
-        socket.assigns.comments_per_load,
-        socket.assigns.comment_offset
-      )
-
-    IO.inspect(replies_two, label: "Loaded Replies two 2")
+    IO.inspect(comments_list, label: "Comments List")
 
     {:noreply,
      socket
@@ -114,7 +94,10 @@ defmodule BloggingWeb.PostLive.Show do
      |> assign(:is_subscribed, is_subscribed?)
      |> assign(:is_following, is_following?)
      |> assign(:reactions, reactions)
-     |> assign(:comments, comments)
+     # ✅ assign only the list
+     |> assign(:comments, comments_list)
+     # ✅ store has_next flag
+     |> assign(:comments_has_next, has_next)
      |> assign(:total_comments, 100)}
   end
 
@@ -190,6 +173,31 @@ defmodule BloggingWeb.PostLive.Show do
   end
 
   @impl true
+  def handle_info({:load_replies, %{"parent_id" => parent_id}}, socket) do
+    current_user_id = socket.assigns.current_user.id
+
+    # ensure a map
+    offsets = Map.get(socket.assigns, :reply_offsets, %{})
+    offset = Map.get(offsets, parent_id, 0)
+    limit = 3
+
+    replies =
+      Blogging.Contents.Comments.Comments.get_replies(parent_id, current_user_id, limit, offset)
+
+    updated_comments =
+      insert_or_append_replies(socket.assigns.comments, parent_id, replies)
+
+    updated_offsets = Map.put(offsets, parent_id, offset + limit)
+
+    IO.inspect(updated_comments, label: "Updated Comments after loading replies")
+
+    {:noreply,
+     socket
+     |> assign(:comments, updated_comments)
+     |> assign(:reply_offsets, updated_offsets)}
+  end
+
+  @impl true
   def handle_info(%{event: "new_reaction"}, socket) do
     reactions =
       Blogging.Contents.Reactions.Reactions.count_reactions_and_user_reaction(
@@ -210,6 +218,68 @@ defmodule BloggingWeb.PostLive.Show do
       )
 
     {:noreply, assign(socket, :comments, updated_comments)}
+  end
+
+  def handle_info(%{event: "update_comment", payload: %{comment: updated_comment}}, socket) do
+    updated_comments =
+      update_comment_in_tree(
+        socket.assigns.comments,
+        updated_comment
+      )
+
+    {:noreply, assign(socket, :comments, updated_comments)}
+  end
+
+  @impl true
+  def handle_info(%{event: "add_reaction", payload: %{comment: updated_comment}}, socket) do
+    updated_comments =
+      update_reaction_in_tree(
+        socket.assigns.comments,
+        updated_comment.id,
+        updated_comment.reaction_data
+      )
+
+    {:noreply, assign(socket, :comments, updated_comments)}
+  end
+
+  @impl true
+  def handle_info({:delete_comment, %{comment_id: comment_id}}, socket) do
+    case socket.assigns.current_user do
+      nil ->
+        {:noreply, put_flash(socket, :error, "You must be logged in to delete a comment")}
+
+      _user ->
+        comment = Blogging.Repo.get!(Comment, comment_id)
+
+        # Optional: check if the current user is the owner
+        # if comment.user_id != socket.assigns.current_user.id do
+        #   {:noreply, put_flash(socket, :error, "Unauthorized")}
+        # else
+
+        {:ok, _} = Blogging.Repo.delete(comment)
+
+        # Broadcast removal to all connected clients
+        topic = "post:comments:#{socket.assigns.post.id}"
+        BloggingWeb.Endpoint.broadcast(topic, "delete_comment", %{comment_id: comment_id})
+
+        {:noreply, put_flash(socket, :info, "Comment deleted")}
+    end
+  end
+
+  @impl true
+  def handle_info(%{event: "delete_comment", payload: %{comment_id: id}}, socket) do
+    updated_comments = remove_comment_from_tree(socket.assigns.comments, id)
+    {:noreply, assign(socket, :comments, updated_comments)}
+  end
+
+  defp remove_comment_from_tree(comments, target_id) do
+    comments
+    |> Enum.reject(&(&1.id == target_id))
+    |> Enum.map(fn comment ->
+      Map.update(comment, :replies, [], fn replies ->
+        remove_comment_from_tree(replies, target_id)
+      end)
+    end)
   end
 
   #   BloggingWeb.Endpoint.broadcast(
@@ -236,17 +306,6 @@ defmodule BloggingWeb.PostLive.Show do
     end
   end
 
-  @impl true
-  def handle_info(%{event: "update_comment", payload: %{comment: updated_comment}}, socket) do
-    updated_comments =
-      update_comment_in_tree(
-        socket.assigns.comments,
-        updated_comment
-      )
-
-    {:noreply, assign(socket, :comments, updated_comments)}
-  end
-
   # BloggingWeb.Endpoint.broadcast(
   #   "comments:post:#{post_id}",
   #   "update_comment",
@@ -270,18 +329,6 @@ defmodule BloggingWeb.PostLive.Show do
     end)
   end
 
-  @impl true
-  def handle_info(%{event: "add_reaction", payload: %{comment: updated_comment}}, socket) do
-    updated_comments =
-      update_reaction_in_tree(
-        socket.assigns.comments,
-        updated_comment.id,
-        updated_comment.reaction_data
-      )
-
-    {:noreply, assign(socket, :comments, updated_comments)}
-  end
-
   # BloggingWeb.Endpoint.broadcast(
   #   "comments:post:#{post_id}",
   #   "add_reaction",
@@ -298,6 +345,46 @@ defmodule BloggingWeb.PostLive.Show do
           updated_replies = update_reaction_in_tree(comment.replies, target_id, new_reaction_data)
           Map.put(comment, :replies, updated_replies)
 
+        true ->
+          comment
+      end
+    end)
+  end
+
+  # def handle_event("load-replies", %{"parent_id" => parent_id}, socket) do
+  #   user_id = socket.assigns.current_user.id
+  #   replies = Blogging.Contents.Comments.get_replies(parent_id, user_id)
+
+  #   updated_comments = insert_replies_in_tree(socket.assigns.comments, parent_id, replies)
+
+  #   {:noreply, assign(socket, :comments, updated_comments)}
+  # end
+
+  defp insert_or_append_replies(comments, parent_id, %{replies: new_replies, has_next: has_next}) do
+    Enum.map(comments, fn comment ->
+      cond do
+        # If this is the parent comment where replies need to be appended
+        comment.id == parent_id ->
+          updated_replies = (comment[:replies] || []) ++ new_replies
+
+          comment
+          |> Map.put(:replies, updated_replies)
+          # ✅ store has_next for replies
+          |> Map.put(:replies_has_next, has_next)
+          |> Map.put(:hide_replies, false) # ✅ ensure replies are visible
+
+        # If this comment has nested replies, search deeper
+        Map.has_key?(comment, :replies) ->
+          updated_children =
+            insert_or_append_replies(comment.replies, parent_id, %{
+              replies: new_replies,
+              has_next: has_next
+            })
+
+          comment
+          |> Map.put(:replies, updated_children)
+
+        # If no match, return comment as is
         true ->
           comment
       end
