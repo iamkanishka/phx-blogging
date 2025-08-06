@@ -16,41 +16,62 @@ defmodule Blogging.Contents.Comments.Comments do
   # Public API
   # ----------------------------------------------------------------------------
 
- def get_comments(post_id, current_user_id, limit \\ 5, offset \\ 0) do
-  base_query =
-    from c in Comment,
-      where: c.post_id == ^post_id and is_nil(c.parent_id),
-      join: u in assoc(c, :user),
-      order_by: [desc: c.inserted_at],
-      limit: ^limit,
-      offset: ^offset,
-      select: %{
-        id: c.id,
-        content: c.content,
-        inserted_at: c.inserted_at,
-        updated_at: c.updated_at,
-        depth: c.depth,
-        parent: c.parent_id,
-        user: %{
-          id: u.id,
-          email: u.email,
-          username: u.username
+  def get_comments(post_id, current_user_id, limit \\ 5, offset \\ 0) do
+    # Subquery to count replies per comment
+    replies_count_query =
+      from r in Comment,
+        where: r.parent_id == parent_as(:comment).id,
+        select: count(r.id)
+
+    # Fetch limit + 1 to check if more comments exist
+    base_query =
+      from c in Comment,
+        as: :comment,
+        where: c.post_id == ^post_id and is_nil(c.parent_id),
+        join: u in assoc(c, :user),
+        order_by: [desc: c.inserted_at],
+        limit: ^(limit + 1),
+        offset: ^offset,
+        select: %{
+          id: c.id,
+          content: c.content,
+          inserted_at: c.inserted_at,
+          replies: [],
+          reply_count: subquery(replies_count_query),
+          replies_has_next: false,
+          hide_replies: true,
+          updated_at: c.updated_at,
+          depth: c.depth,
+          parent: c.parent_id,
+          user: %{
+            id: u.id,
+            email: u.email,
+            username: u.username
+          }
         }
-      }
 
-  comments = Blogging.Repo.all(base_query)
+    results = Blogging.Repo.all(base_query)
 
-  Enum.map(comments, fn comment ->
-    reaction_counts = get_reaction_counts("comment", comment.id)
-    user_reacted = get_user_reaction("comment", comment.id, current_user_id)
+    # Determine if there are more comments
+    has_next = length(results) > limit
 
-    Map.put(comment, :reaction_data, %{
-      counts: reaction_counts,
-      user_reacted: user_reacted
-    })
-  end)
-end
+    # Only take the requested limit
+    comments = Enum.take(results, limit)
 
+    # Attach reaction data for each comment
+    comments_with_reactions =
+      Enum.map(comments, fn comment ->
+        reaction_counts = get_reaction_counts("comment", comment.id)
+        user_reacted = get_user_reaction("comment", comment.id, current_user_id)
+
+        Map.put(comment, :reaction_data, %{
+          counts: reaction_counts,
+          user_reacted: user_reacted
+        })
+      end)
+
+    %{comments: comments_with_reactions, has_next: has_next}
+  end
 
   #   def get_top_comments(post_id, current_user_id, limit \\ 5) do
   #   # limit = Keyword.get(opts, :limit, 5)
@@ -74,41 +95,62 @@ end
   #     })
   #   end)
   # end
-def get_replies(comment_id, current_user_id, limit \\ 3, offset \\ 0) do
-  base_query =
-    from r in Comment,
-      where: r.parent_id == ^comment_id,
-      join: u in assoc(r, :user),
-      order_by: [asc: r.inserted_at],
-      limit: ^limit,
-      offset: ^offset,
-      select: %{
-        id: r.id,
-        content: r.content,
-        inserted_at: r.inserted_at,
-        updated_at: r.updated_at,
-        depth: r.depth,
-        parent: r.parent_id,
-        user: %{
-          id: u.id,
-          email: u.email,
-          username: u.username
+  def get_replies(comment_id, current_user_id, limit \\ 3, offset \\ 0) do
+    # Subquery to count replies for each reply
+    replies_count_query =
+      from r2 in Comment,
+        where: r2.parent_id == parent_as(:reply).id,
+        select: count(r2.id)
+
+    # Fetch limit + 1 to check if more replies exist
+    base_query =
+      from r in Comment,
+        as: :reply,
+        where: r.parent_id == ^comment_id,
+        join: u in assoc(r, :user),
+        order_by: [asc: r.inserted_at],
+        limit: ^(limit + 1),
+        offset: ^offset,
+        select: %{
+          id: r.id,
+          content: r.content,
+          inserted_at: r.inserted_at,
+          replies: [],
+          reply_count: subquery(replies_count_query),
+          replies_has_next: false,
+          hide_replies: true,
+          updated_at: r.updated_at,
+          depth: r.depth,
+          parent: r.parent_id,
+          user: %{
+            id: u.id,
+            email: u.email,
+            username: u.username
+          }
         }
-      }
 
-  replies = Blogging.Repo.all(base_query)
+    results = Blogging.Repo.all(base_query)
 
-  Enum.map(replies, fn reply ->
-    reaction_counts = get_reaction_counts("comment", reply.id)
-    user_reacted = get_user_reaction("comment", reply.id, current_user_id)
+    # Determine if more replies exist
+    has_next = length(results) > limit
 
-    Map.put(reply, :reaction_data, %{
-      counts: reaction_counts,
-      user_reacted: user_reacted
-    })
-  end)
-end
+    # Take only requested limit
+    replies = Enum.take(results, limit)
 
+    # Attach reaction data for each reply
+    replies_with_reactions =
+      Enum.map(replies, fn reply ->
+        reaction_counts = get_reaction_counts("comment", reply.id)
+        user_reacted = get_user_reaction("comment", reply.id, current_user_id)
+
+        Map.put(reply, :reaction_data, %{
+          counts: reaction_counts,
+          user_reacted: user_reacted
+        })
+      end)
+
+    %{replies: replies_with_reactions, has_next: has_next}
+  end
 
   defp get_reaction_counts(reactable_type, reactable_id) do
     from(r in Blogging.Contents.Reactions.Reaction,
