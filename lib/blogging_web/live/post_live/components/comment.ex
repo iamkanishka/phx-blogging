@@ -1,7 +1,6 @@
 defmodule BloggingWeb.PostLive.Components.Comment do
   use BloggingWeb, :live_component
 
-
   @impl true
   def render(assigns) do
     ~H"""
@@ -64,22 +63,32 @@ defmodule BloggingWeb.PostLive.Components.Comment do
             <span>{@comment.reply_count} reply</span>
           </div> --%>
           <div
-             phx-click="toggle_replies"
+            phx-click={if @comment.reply_count > 0, do: "toggle_replies", else: nil}
             phx-target={@myself}
             phx-value-comment-id={@comment.id}
             class="flex items-center space-x-0.5 cursor-pointer"
           >
             <span>
-              <%= if @comment.hide_replies do %>
-                Show {@comment.reply_count} reply
-              <% else %>
-                Hide replies
+              <%= cond do %>
+                <% @comment.reply_count == 0 -> %>
+                  no replies
+                <% @comment.reply_count == 1 -> %>
+                  {if @comment.hide_replies, do: "1 reply", else: "Hide reply"}
+                <% @comment.reply_count > 1 -> %>
+                  {if @comment.hide_replies,
+                    do: "#{@comment.reply_count} replies",
+                    else: "Hide replies"}
               <% end %>
             </span>
           </div>
 
     <!-- Reply Button -->
-          <a href="#" phx-click="show_reply_form" phx-target={@myself} class="hover:text-blue-600 focus:outline-none">
+          <a
+            href="#"
+            phx-click="show_reply_form"
+            phx-target={@myself}
+            class="hover:text-blue-600 focus:outline-none"
+          >
             Reply
           </a>
 
@@ -230,27 +239,28 @@ defmodule BloggingWeb.PostLive.Components.Comment do
     {:noreply, assign(socket, :confirm_delete, false)}
   end
 
-def handle_event("toggle_replies", %{"comment-id" => id}, socket) do
-  socket = socket
-  |> assign(:show_reply_form, false) # Ensure hide_replies is reset to false when toggling
+  def handle_event("toggle_replies", %{"comment-id" => id}, socket) do
+    socket =
+      socket
+      # Ensure hide_replies is reset to false when toggling
+      |> assign(:show_reply_form, false)
 
-  comment = socket.assigns.comment
+    comment = socket.assigns.comment
 
-  if comment.id == id do
-    if comment.replies == [] do
-      # Replies not loaded → trigger load, don't change hide_replies yet
-      send(self(), {:load_replies, %{"parent_id" => id}})
-      #  updated_comment = %{comment | hide_replies: false}
-      # {:noreply, assign(socket, :comment, updated_comment)}
-      {:noreply, socket}
+    if comment.id == id do
+      if comment.replies == [] do
+        # Replies not loaded → trigger load, don't change hide_replies yet
+        send(self(), {:load_replies, %{"parent_id" => id}})
+        #  updated_comment = %{comment | hide_replies: false}
+        # {:noreply, assign(socket, :comment, updated_comment)}
+        {:noreply, socket}
+      else
+        # Replies already loaded → just toggle
+        updated_comment = %{comment | hide_replies: !comment.hide_replies}
+        {:noreply, assign(socket, :comment, updated_comment)}
+      end
     else
-      # Replies already loaded → just toggle
-      updated_comment = %{comment | hide_replies: !comment.hide_replies}
-      {:noreply, assign(socket, :comment, updated_comment)}
+      {:noreply, socket}
     end
-  else
-    {:noreply, socket}
   end
-end
-
 end
