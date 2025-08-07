@@ -125,7 +125,34 @@
     <!--
  <button phx-click="load-comments" type="button"> Load commets </button>
   -->
-    <h1 class="text-2xl font-bold mb-4">Comments</h1>
+
+    <div class="text-xl font-bold ">Comments</div>
+
+    <div class="space-y-2">
+      <.simple_form for={@form} id="comment-form" phx-submit="add_comment" class="w-full">
+        <%= if @reply_to do %>
+          <div class="text-sm text-gray-500">
+            Replying to comment ID: <%= @reply_to %>
+              <button type="button" phx-click="cancel_reply" class="ml-2 text-red-500 text-xs">Cancel</button>
+          </div>
+          <% end %>
+
+
+            <.input field={@form[:content]} type="text" placeholder="Type your comment here..." class="w-full " />
+
+      </.simple_form>
+
+ 
+        <button type="submit" form="comment-form"
+          class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">Add Comment</button> 
+
+
+
+    </div>
+
+
+
+
     <div class="comments space-y-4 h-[350px] overflow-x-auto overflow-y-auto" id="comments">
       <%= for comment <- @comments do %>
 
