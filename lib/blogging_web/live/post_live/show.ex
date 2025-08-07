@@ -13,6 +13,7 @@ defmodule BloggingWeb.PostLive.Show do
   @impl true
   def mount(_params, session, socket) do
     current_user = Accounts.get_user_by_session_token(session["user_token"])
+    comment_changeset = Comment.changeset(%Comment{}, %{"content" => ""})
 
     socket =
       socket
@@ -24,7 +25,7 @@ defmodule BloggingWeb.PostLive.Show do
       |> assign(:bookmarked, false)
       |> assign(:reactions, %{})
       |> assign(:comments, [])
-      |> assign(:comment_changeset, Comment.changeset(%Comment{}, %{}))
+      |> assign_form(comment_changeset)
       |> assign(:reply_to, nil)
       |> assign(:comment_offset, 0)
       |> assign(:comments_per_load, 5)
@@ -98,6 +99,7 @@ defmodule BloggingWeb.PostLive.Show do
      |> assign(:comments, comments_list)
      # ✅ store has_next flag
      |> assign(:comments_has_next, has_next)
+     |> assign(:comment_changeset, Comment.changeset(%Comment{}, %{"content" => ""}))
      |> assign(:total_comments, 100)}
   end
 
@@ -116,8 +118,9 @@ defmodule BloggingWeb.PostLive.Show do
 
         case Blogging.Repo.insert(Comment.changeset(%Comment{}, comment_params)) do
           {:ok, comment} ->
+            enriched_comment = Comments.get_single_comment(comment.id, comment.user_id)
             topic = "post:comments:#{socket.assigns.post.id}"
-            BloggingWeb.Endpoint.broadcast(topic, "new_comment", %{comment: comment})
+            BloggingWeb.Endpoint.broadcast(topic, "new_comment", %{comment: enriched_comment})
 
             {:noreply,
              socket
@@ -142,25 +145,21 @@ defmodule BloggingWeb.PostLive.Show do
   def handle_event("load-more-comments", _params, socket) do
     new_offset = socket.assigns.comment_offset + socket.assigns.comments_per_load
 
-    new_comments =
+    %{comments: comments_list, has_next: has_next} =
       Comments.get_comments(
         socket.assigns.post.id,
         socket.assigns.current_user && socket.assigns.current_user.id,
         socket.assigns.comments_per_load,
-        new_offset
+         new_offset
       )
 
-    comments =
-      build_comment_tree_with_offset(
-        new_comments,
-        socket.assigns.comment_offset,
-        socket.assigns.comments_per_load
-      )
-
-    updated_comments = socket.assigns.comments ++ comments
+    updated_comments = socket.assigns.comments ++ comments_list
 
     {:noreply,
-     socket |> assign(:comments, updated_comments) |> assign(:comment_offset, new_offset)}
+     socket
+     |> assign(:comments, updated_comments)
+     |> assign(:comment_offset, new_offset)
+     |> assign(:comments_has_next, has_next)}
   end
 
   def handle_event("load-comments", _params, socket) do
@@ -216,6 +215,8 @@ defmodule BloggingWeb.PostLive.Show do
         socket.assigns.comments,
         new_comment
       )
+
+    IO.inspect(new_comment, label: "New Comment Received")
 
     {:noreply, assign(socket, :comments, updated_comments)}
   end
@@ -291,6 +292,7 @@ defmodule BloggingWeb.PostLive.Show do
   defp insert_comment_into_tree(comments, new_comment) do
     # Top-level comment
     if is_nil(new_comment.parent) do
+      IO.inspect(new_comment, label: "Inserting Top-level Comment")
       [Map.put(new_comment, :replies, []) | comments]
     else
       Enum.map(comments, fn comment ->
@@ -371,7 +373,8 @@ defmodule BloggingWeb.PostLive.Show do
           |> Map.put(:replies, updated_replies)
           # ✅ store has_next for replies
           |> Map.put(:replies_has_next, has_next)
-          |> Map.put(:hide_replies, false) # ✅ ensure replies are visible
+          # ✅ ensure replies are visible
+          |> Map.put(:hide_replies, false)
 
         # If this comment has nested replies, search deeper
         Map.has_key?(comment, :replies) ->
@@ -409,6 +412,10 @@ defmodule BloggingWeb.PostLive.Show do
       |> Enum.map(&add_replies(&1, comments_by_id))
 
     %{comment | replies: replies}
+  end
+
+  defp assign_form(socket, %Ecto.Changeset{} = changeset) do
+    assign(socket, :form, to_form(changeset))
   end
 
   defp page_title(:show), do: "Show Post"
