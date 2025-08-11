@@ -109,6 +109,37 @@ defmodule BloggingWeb.PostLive.Components.Comment do
         </div>
       </div>
 
+    <!-- ✅ Reply Form -->
+      <%= if @show_reply_form do %>
+        <div class="my-2">
+          <form phx-submit="add_reply" phx-target={@myself} class="ml-6 mt-2 space-y-1">
+            <textarea
+              name="reply_content"
+              rows="2"
+              class="w-full border rounded-md p-2 text-sm"
+              placeholder="Write your reply..."
+            ></textarea>
+            <div class="flex space-x-2">
+              <button
+                type="submit"
+                class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
+              >
+                Reply
+              </button>
+
+              <button
+                type="button"
+                phx-click="cancel_reply"
+                phx-target={@myself}
+                class="text-gray-500 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      <% end %>
+
     <!-- Replies Section -->
       <div class="replies ml-5">
         <%= unless @comment.hide_replies do %>
@@ -131,35 +162,6 @@ defmodule BloggingWeb.PostLive.Components.Comment do
           </a>
         <% end %>
       </div>
-
-    <!-- ✅ Reply Form -->
-      <%= if @show_reply_form do %>
-        <form phx-submit="add_reply" phx-target={@myself} class="ml-6 mt-2 space-y-2">
-          <textarea
-            name="reply_content"
-            rows="2"
-            class="w-full border rounded-md p-2 text-sm"
-            placeholder="Write your reply..."
-          ></textarea>
-          <div class="flex space-x-2">
-            <button
-              type="submit"
-              class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-sm"
-            >
-              Reply
-            </button>
-
-            <button
-              type="button"
-              phx-click="cancel_reply"
-              phx-target={@myself}
-              class="text-gray-500 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
-      <% end %>
 
     <!-- ✅ Delete Confirmation -->
       <%= if @confirm_delete do %>
@@ -204,6 +206,11 @@ defmodule BloggingWeb.PostLive.Components.Comment do
     {:noreply, socket}
   end
 
+  def handle_event("save_edit", %{"edited_content" => content}, socket) do
+    send(self(), {:edit_comment, %{comment_id: socket.assigns.comment.id, content: content}})
+    {:noreply, assign(socket, :edit_mode, false)}
+  end
+
   def handle_event("show_reply_form", _, socket),
     do: {:noreply, assign(socket, :show_reply_form, true)}
 
@@ -222,11 +229,6 @@ defmodule BloggingWeb.PostLive.Components.Comment do
   def handle_event("cancel_edit", _, socket),
     do: {:noreply, assign(socket, :edit_mode, false)}
 
-  def handle_event("save_edit", %{"edited_content" => content}, socket) do
-    send(self(), {:update_comment, %{comment_id: socket.assigns.comment.id, content: content}})
-    {:noreply, assign(socket, :edit_mode, false)}
-  end
-
   ## ✅ Delete Events
   def handle_event("confirm_delete", _, socket),
     do: {:noreply, assign(socket, :confirm_delete, true)}
@@ -240,11 +242,6 @@ defmodule BloggingWeb.PostLive.Components.Comment do
   end
 
   def handle_event("toggle_replies", %{"comment-id" => id}, socket) do
-    socket =
-      socket
-      # Ensure hide_replies is reset to false when toggling
-      |> assign(:show_reply_form, false)
-
     comment = socket.assigns.comment
 
     if comment.id == id do
