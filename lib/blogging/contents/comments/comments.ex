@@ -16,50 +16,50 @@ defmodule Blogging.Contents.Comments.Comments do
   # Public API
   # ----------------------------------------------------------------------------
 
-
   def get_single_comment(comment_id, current_user_id) do
-  # Subquery to count replies
-  replies_count_query =
-    from r in Comment,
-      where: r.parent_id == parent_as(:comment).id,
-      select: count(r.id)
+    # Subquery to count replies
+    replies_count_query =
+      from r in Comment,
+        where: r.parent_id == parent_as(:comment).id,
+        select: count(r.id)
 
-  query =
-    from c in Comment,
-      as: :comment,
-      where: c.id == ^comment_id,
-      join: u in assoc(c, :user),
-      select: %{
-        id: c.id,
-        content: c.content,
-        inserted_at: c.inserted_at,
-        replies: [],
-        reply_count: subquery(replies_count_query),
-        replies_has_next: false,
-        hide_replies: true,
-        updated_at: c.updated_at,
-        depth: c.depth,
-        parent: c.parent_id,
-        user: %{
-          id: u.id,
-          email: u.email,
-          username: u.username
+    query =
+      from c in Comment,
+        as: :comment,
+        where: c.id == ^comment_id,
+        join: u in assoc(c, :user),
+        select: %{
+          id: c.id,
+          content: c.content,
+          inserted_at: c.inserted_at,
+          replies: [],
+          reply_count: subquery(replies_count_query),
+          replies_has_next: false,
+          hide_replies: true,
+          updated_at: c.updated_at,
+          depth: c.depth,
+          parent: c.parent_id,
+          user: %{
+            id: u.id,
+            email: u.email,
+            username: u.username
+          }
         }
-      }
 
-  case Blogging.Repo.one(query) do
-    nil -> nil
-    comment ->
-      reaction_counts = get_reaction_counts("comment", comment.id)
-      user_reacted = get_user_reaction("comment", comment.id, current_user_id)
+    case Blogging.Repo.one(query) do
+      nil ->
+        nil
 
-      Map.put(comment, :reaction_data, %{
-        counts: reaction_counts,
-        user_reacted: user_reacted
-      })
+      comment ->
+        reaction_counts = get_reaction_counts("comment", comment.id)
+        user_reacted = get_user_reaction("comment", comment.id, current_user_id)
+
+        Map.put(comment, :reaction_data, %{
+          counts: reaction_counts,
+          user_reacted: user_reacted
+        })
+    end
   end
-end
-
 
   def get_comments(post_id, current_user_id, limit \\ 5, offset \\ 0) do
     # Subquery to count replies per comment
@@ -153,7 +153,7 @@ end
         as: :reply,
         where: r.parent_id == ^comment_id,
         join: u in assoc(r, :user),
-        order_by: [asc: r.inserted_at],
+        order_by: [desc: r.inserted_at],
         limit: ^(limit + 1),
         offset: ^offset,
         select: %{
