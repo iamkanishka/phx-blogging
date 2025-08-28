@@ -73,8 +73,8 @@
     <div class="flex justify-between ">
 
 
-      <.live_component module={BloggingWeb.PostLive.Components.Reaction} id="reactions-#{@post.id}" post_id={@post.id}
-        reactions={@reactions} current_user={@current_user} />
+      <.live_component module={BloggingWeb.PostLive.Components.Reaction} id="reactions-#{@post.id}" reactable_id={@post.id}
+        reactions={@reactions} reactable_type={"post"} current_user={@current_user} />
 
 
       <!-- Comments and Bookmark -->
@@ -138,16 +138,14 @@
           <% end %>
 
 
-            <.input field={@form[:content]} type="text" placeholder="Type your comment here..." class="w-full " />
+            <.input field={@form[:content]} type="text" placeholder="Post your comment here..." class="w-full " />
+
+            <button type="submit" form="comment-form"
+              class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">Add Comment</button>
 
       </.simple_form>
 
  
-        <button type="submit" form="comment-form"
-          class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition">Add Comment</button> 
-
-
-
     </div>
 
 
@@ -157,7 +155,7 @@
       <%= for comment <- @comments do %>
 
         <.live_component module={BloggingWeb.PostLive.Components.Comment} id={"comment-#{comment.id}"}
-          comment={comment} />
+          post_id={@post.id} reactable_type={"comment"} current_user={@current_user} comment={comment} />
 
         <% end %>
           <%= if length(@comments) < @total_comments and @comments_has_next do %>
