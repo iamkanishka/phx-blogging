@@ -47,6 +47,17 @@ defmodule BloggingWeb.PostLive.Components.Comment do
           </div>
         <% end %>
 
+
+      <.live_component
+          module={BloggingWeb.PostLive.Components.Reaction}
+        id={"comment_reactions-#{@comment.id}-#{@post_id}"}
+          reactable_id={@comment.id}
+          post_id={@post_id}
+          reactions={@comment.reaction_data}
+          reactable_type="comment"
+          current_user={@current_user}
+        />
+
     <!-- Footer Actions -->
         <div class="flex items-center justify-start space-x-6 text-gray-500 text-sm">
           <%!-- <button class="flex items-center space-x-1 hover:text-blue-600">
@@ -189,9 +200,11 @@ defmodule BloggingWeb.PostLive.Components.Comment do
 
   @impl true
   def update(assigns, socket) do
+
     {
       :ok,
       socket
+      |> assign(:reactions, %{})
       |> assign(assigns)
       |> assign_new(:show_reply_form, fn -> false end)
       |> assign_new(:edit_mode, fn -> false end)
@@ -218,7 +231,7 @@ defmodule BloggingWeb.PostLive.Components.Comment do
     do: {:noreply, assign(socket, :show_reply_form, false)}
 
   def handle_event("add_reply", %{"reply_content" => content}, socket) do
-    send(self(), {:add_reply, %{parent_id: socket.assigns.comment.id, content: content}})
+    send(self(), {:add_reply, %{parent_id: socket.assigns.comment.id, content: %{"content"=> content}}})
     {:noreply, assign(socket, :show_reply_form, false)}
   end
 
