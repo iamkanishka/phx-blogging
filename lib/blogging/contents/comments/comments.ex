@@ -16,6 +16,8 @@ defmodule Blogging.Contents.Comments.Comments do
   # Public API
   # ----------------------------------------------------------------------------
 
+  @reaction_types ~w(like love wow laugh sad angry)
+
   def get_single_comment(comment_id, current_user_id) do
     # Subquery to count replies
     replies_count_query =
@@ -52,7 +54,15 @@ defmodule Blogging.Contents.Comments.Comments do
 
       comment ->
         reaction_counts = get_reaction_counts("comment", comment.id)
-        user_reacted = get_user_reaction("comment", comment.id, current_user_id)
+        # user_reacted = get_user_reaction("comment", comment.id, current_user_id)
+
+        user_reacted_types =
+          get_user_reaction("comment", comment.id, current_user_id)
+
+        user_reacted =
+          Enum.into(@reaction_types, %{}, fn type ->
+            {type, MapSet.member?(user_reacted_types, type)}
+          end)
 
         Map.put(comment, :reaction_data, %{
           counts: reaction_counts,
@@ -107,7 +117,15 @@ defmodule Blogging.Contents.Comments.Comments do
     comments_with_reactions =
       Enum.map(comments, fn comment ->
         reaction_counts = get_reaction_counts("comment", comment.id)
-        user_reacted = get_user_reaction("comment", comment.id, current_user_id)
+        # user_reacted = get_user_reaction("comment", comment.id, current_user_id)
+
+        user_reacted_types =
+          get_user_reaction("comment", comment.id, current_user_id)
+
+        user_reacted =
+          Enum.into(@reaction_types, %{}, fn type ->
+            {type, MapSet.member?(user_reacted_types, type)}
+          end)
 
         Map.put(comment, :reaction_data, %{
           counts: reaction_counts,
@@ -186,7 +204,15 @@ defmodule Blogging.Contents.Comments.Comments do
     replies_with_reactions =
       Enum.map(replies, fn reply ->
         reaction_counts = get_reaction_counts("comment", reply.id)
-        user_reacted = get_user_reaction("comment", reply.id, current_user_id)
+        # user_reacted = get_user_reaction("comment", reply.id, current_user_id)
+
+        user_reacted_types =
+          get_user_reaction("comment", reply.id, current_user_id)
+
+        user_reacted =
+          Enum.into(@reaction_types, %{}, fn type ->
+            {type, MapSet.member?(user_reacted_types, type)}
+          end)
 
         Map.put(reply, :reaction_data, %{
           counts: reaction_counts,
@@ -209,13 +235,15 @@ defmodule Blogging.Contents.Comments.Comments do
   end
 
   defp get_user_reaction(reactable_type, reactable_id, user_id) do
-    from(r in Blogging.Contents.Reactions.Reaction,
-      where:
-        r.reactable_type == ^reactable_type and r.reactable_id == ^reactable_id and
-          r.user_id == ^user_id,
-      select: r.type
-    )
-    |> Blogging.Repo.one()
+    user_reactions_query =
+      from(r in Blogging.Contents.Reactions.Reaction,
+        where:
+          r.reactable_type == ^reactable_type and r.reactable_id == ^reactable_id and
+            r.user_id == ^user_id,
+        select: r.type
+      )
+
+    Blogging.Repo.all(user_reactions_query) |> MapSet.new()
   end
 
   #   # Get top-level comments with replies (limited if needed)
