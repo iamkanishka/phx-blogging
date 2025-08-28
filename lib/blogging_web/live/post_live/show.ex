@@ -39,6 +39,7 @@ defmodule BloggingWeb.PostLive.Show do
       # Subscribe to reaction and comment updates
       BloggingWeb.Endpoint.subscribe("post:reactions:#{id}")
       BloggingWeb.Endpoint.subscribe("post:comments:#{id}")
+      BloggingWeb.Endpoint.subscribe("post:comments:reactions:#{id}")
     end
 
     post =
@@ -84,8 +85,6 @@ defmodule BloggingWeb.PostLive.Show do
         socket.assigns.comment_offset
       )
 
-    IO.inspect(comments_list, label: "Comments List")
-
     {:noreply,
      socket
      |> assign(:page_title, page_title(socket.assigns.live_action))
@@ -109,54 +108,76 @@ defmodule BloggingWeb.PostLive.Show do
     add_comment_or_reply(socket, comment_params)
   end
 
-  defp add_comment_or_reply(socket, comment, reply_to \\ nil) do
-    # IO.inspect(content, label: "Content for Reply")
+  # defp add_comment_or_reply(socket, comment, reply_to \\ nil) do
+  #   # IO.inspect(content, label: "Content for Reply")
+  #   case socket.assigns.current_user do
+  #     nil ->
+  #       {:noreply, put_flash(socket, :error, "You must be logged in to comment")}
+
+  #     user ->
+  #       comment_params =
+  #         %{}
+  #         |> Map.put("content", comment)
+  #         |> Map.put("user_id", user.id)
+  #         |> Map.put("post_id", socket.assigns.post.id)
+  #         |> Map.put("parent_id", reply_to)
+
+  #       IO.inspect(comment_params, label: "Comment Params")
+
+  #       case Blogging.Repo.insert(Comment.changeset(%Comment{}, comment_params)) do
+  #         {:ok, comment} ->
+  #           IO.inspect(comment, label: "Newly Added Comment")
+  #           enriched_comment = Comments.get_single_comment(comment.id, comment.user_id)
+  #           topic = "post:comments:#{socket.assigns.post.id}"
+  #           BloggingWeb.Endpoint.broadcast(topic, "new_comment", %{comment: enriched_comment})
+
+  #           {:noreply,
+  #            socket
+  #            |> assign(:comment_changeset, Comment.changeset(%Comment{}, %{}))
+  #            |> assign(:reply_to, nil)
+  #            |> put_flash(:info, "Comment added!")}
+
+  #         {:error, changeset} ->
+  #           {:noreply, assign(socket, :comment_changeset, changeset)}
+  #       end
+  #   end
+  # end
+
+  defp add_comment_or_reply(socket, content, reply_to \\ nil) do
+    IO.inspect(content, label: "Content for Reply")
     case socket.assigns.current_user do
       nil ->
         {:noreply, put_flash(socket, :error, "You must be logged in to comment")}
 
       user ->
-        comment_params =
-          %{}
-          |> Map.put("content", comment)
-          |> Map.put("user_id", user.id)
-          |> Map.put("post_id", socket.assigns.post.id)
-          |> Map.put("parent_id", reply_to)
+        comment_params = %{
+          "content" => content["content"],
+          "user_id" => user.id,
+          "post_id" => socket.assigns.post.id,
+          "parent_id" => reply_to
+        }
 
         case Blogging.Repo.insert(Comment.changeset(%Comment{}, comment_params)) do
           {:ok, comment} ->
             enriched_comment = Comments.get_single_comment(comment.id, comment.user_id)
+
             topic = "post:comments:#{socket.assigns.post.id}"
             BloggingWeb.Endpoint.broadcast(topic, "new_comment", %{comment: enriched_comment})
 
             {:noreply,
              socket
-             |> assign(:comment_changeset, Comment.changeset(%Comment{}, %{}))
+             |> assign(:comment_changeset, Comment.changeset(%Comment{}, %{"content" => ""}))
              |> assign(:reply_to, nil)
              |> put_flash(:info, "Comment added!")}
 
-          {:error, changeset} ->
+          {:error, %Ecto.Changeset{} = changeset} ->
+            IO.inspect(changeset.errors, label: "Comment insert errors")
             {:noreply, assign(socket, :comment_changeset, changeset)}
         end
+
+      _ ->
+        {:noreply, put_flash(socket, :error, "Comment content cannot be empty")}
     end
-  end
-
-  @impl true
-  def handle_info({:add_reply, %{parent_id: parent_id, content: content}}, socket) do
-    IO.inspect(parent_id, label: "Parent ID for Reply")
-    IO.inspect(content, label: "Content for Reply")
-    # Ensure the content is not empty
-    add_comment_or_reply(socket, content, parent_id)
-  end
-
-  @impl true
-  def handle_info({:edit_reply, %{comment_id: comment_id, content: content}}, socket) do
-    edit_comment_or_reply(socket, comment_id, content)
-  end
-
-  @impl true
-  def handle_info({:edit_comment, %{comment_id: comment_id, content: content}}, socket) do
-    edit_comment_or_reply(socket, comment_id, content)
   end
 
   defp edit_comment_or_reply(socket, comment_id, content) do
@@ -179,19 +200,6 @@ defmodule BloggingWeb.PostLive.Show do
     end
   end
 
-  def handle_info(
-        %{event: "update_comment", payload: %{content: content}},
-        socket
-      ) do
-    updated_comments =
-      update_comment_in_tree(
-        socket.assigns.comments,
-        content
-      )
-
-    {:noreply, assign(socket, :comments, updated_comments)}
-  end
-
   # @impl true
   # def handle_info({:comment_updated, updated_comment}, socket) do
   #   updated_comments =
@@ -200,6 +208,7 @@ defmodule BloggingWeb.PostLive.Show do
   #   {:noreply, assign(socket, :comments, updated_comments)}
   # end
 
+  @impl true
   def handle_event("cancel_reply", _, socket) do
     {:noreply, assign(socket, :reply_to, nil)}
   end
@@ -271,6 +280,29 @@ defmodule BloggingWeb.PostLive.Show do
   end
 
   @impl true
+  def handle_info({:add_reply, %{parent_id: parent_id, content: content}}, socket) do
+    # Ensure the content is not empty
+    add_comment_or_reply(socket, content, parent_id)
+  end
+
+  def handle_info({:edit_reply, %{comment_id: comment_id, content: content}}, socket) do
+    edit_comment_or_reply(socket, comment_id, content)
+  end
+
+  def handle_info({:edit_comment, %{comment_id: comment_id, content: content}}, socket) do
+    edit_comment_or_reply(socket, comment_id, content)
+  end
+
+  def handle_info(%{event: "update_comment", payload: %{content: content}}, socket) do
+    updated_comments =
+      update_comment_in_tree(
+        socket.assigns.comments,
+        content
+      )
+
+    {:noreply, assign(socket, :comments, updated_comments)}
+  end
+
   def handle_info(%{event: "new_comment", payload: %{comment: new_comment}}, socket) do
     updated_comments =
       insert_comment_into_tree(
@@ -278,26 +310,22 @@ defmodule BloggingWeb.PostLive.Show do
         new_comment
       )
 
-    IO.inspect(new_comment, label: "New Comment Received")
-
     {:noreply, assign(socket, :comments, updated_comments)}
   end
 
-  # def handle_info({:load_replies, %{"parent_id" => parent_id}}, socket) do
+
 
   @impl true
-  def handle_info(%{event: "add_reaction", payload: %{comment: updated_comment}}, socket) do
+  def handle_info(
+        %{event: "add_reaction", payload: %{id: reactable_id, type: emoji, user_id: user_id}},
+        socket
+      ) do
     updated_comments =
-      update_reaction_in_tree(
-        socket.assigns.comments,
-        updated_comment.id,
-        updated_comment.reaction_data
-      )
+      update_reaction_in_tree(socket.assigns.comments, reactable_id, emoji, user_id)
 
     {:noreply, assign(socket, :comments, updated_comments)}
   end
 
-  @impl true
   def handle_info({:delete_comment, %{comment_id: comment_id}}, socket) do
     case socket.assigns.current_user do
       nil ->
@@ -321,7 +349,6 @@ defmodule BloggingWeb.PostLive.Show do
     end
   end
 
-  @impl true
   def handle_info(%{event: "delete_comment", payload: %{comment_id: id}}, socket) do
     updated_comments = remove_comment_from_tree(socket.assigns.comments, id)
     {:noreply, assign(socket, :comments, updated_comments)}
@@ -351,8 +378,6 @@ defmodule BloggingWeb.PostLive.Show do
     else
       Enum.map(comments, fn comment ->
         if comment.id == new_comment.parent do
-          IO.inspect(comment, label: "Inserting Reply into Comment")
-
           replies = (comment.replies || []) ++ [Map.put(new_comment, :replies, [])]
 
           comment
@@ -390,20 +415,15 @@ defmodule BloggingWeb.PostLive.Show do
     end)
   end
 
-  # BloggingWeb.Endpoint.broadcast(
-  #   "comments:post:#{post_id}",
-  #   "add_reaction",
-  #   %{comment: %{id: comment.id, reaction_data: updated_reaction_data}}
-  # )
 
-  defp update_reaction_in_tree(comments, target_id, new_reaction_data) do
+  defp update_reaction_in_tree(comments, target_id, emoji, user_id) do
     Enum.map(comments, fn comment ->
       cond do
         comment.id == target_id ->
-          Map.put(comment, :reaction_data, new_reaction_data)
+          update_reaction(comment, emoji, user_id, target_id)
 
         Map.has_key?(comment, :replies) ->
-          updated_replies = update_reaction_in_tree(comment.replies, target_id, new_reaction_data)
+          updated_replies = update_reaction_in_tree(comment.replies, target_id, emoji, user_id)
           Map.put(comment, :replies, updated_replies)
 
         true ->
@@ -412,14 +432,23 @@ defmodule BloggingWeb.PostLive.Show do
     end)
   end
 
-  # def handle_event("load-replies", %{"parent_id" => parent_id}, socket) do
-  #   user_id = socket.assigns.current_user.id
-  #   replies = Blogging.Contents.Comments.get_replies(parent_id, user_id)
+  defp update_reaction(comment, _emoji, user_id, target_id) do
 
-  #   updated_comments = insert_replies_in_tree(socket.assigns.comments, parent_id, replies)
 
-  #   {:noreply, assign(socket, :comments, updated_comments)}
-  # end
+     updated_reaction_data =
+      Blogging.Contents.Reactions.Reactions.count_reactions_and_user_reaction(
+        "comment",
+        target_id,
+         user_id
+      )
+
+      IO.inspect(user_id, label: "user_id Being Updated")
+      IO.inspect(updated_reaction_data, label: "Updated Reaction Data")
+
+    Map.put(comment, :reaction_data, updated_reaction_data)
+  end
+
+
 
   defp insert_or_append_replies(comments, parent_id, %{replies: new_replies, has_next: has_next}) do
     Enum.map(comments, fn comment ->
@@ -451,26 +480,6 @@ defmodule BloggingWeb.PostLive.Show do
           comment
       end
     end)
-  end
-
-  defp build_comment_tree_with_offset(comments, offset, limit) do
-    comments_by_id = Enum.group_by(comments, & &1.id)
-
-    comments
-    |> Enum.filter(&is_nil(&1.parent_id))
-    |> Enum.sort_by(& &1.inserted_at, {:desc, NaiveDateTime})
-    |> Enum.drop(offset)
-    |> Enum.take(limit)
-    |> Enum.map(&add_replies(&1, comments_by_id))
-  end
-
-  defp add_replies(comment, comments_by_id) do
-    replies =
-      (comments_by_id[comment.id] || [])
-      |> Enum.flat_map(& &1.replies)
-      |> Enum.map(&add_replies(&1, comments_by_id))
-
-    %{comment | replies: replies}
   end
 
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
