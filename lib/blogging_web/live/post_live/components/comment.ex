@@ -156,7 +156,7 @@ defmodule BloggingWeb.PostLive.Components.Comment do
         <%= unless @comment.hide_replies do %>
           <div class="border-l-2 border-gray-300 space-y-2 pl-1">
             <%= for reply <- @comment.replies do %>
-              <.live_component module={__MODULE__} id={"reply-#{reply.id}"} comment={reply} />
+              <.live_component module={__MODULE__} id={"reply-#{reply.id}"} comment={reply} post_id={@post_id} current_user={@current_user}  />
             <% end %>
           </div>
         <% end %>
