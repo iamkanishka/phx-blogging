@@ -141,5 +141,24 @@ defmodule Blogging.Contents.Posts.Posts do
     Repo.all(final_query)
   end
 
+  def get_post_with_comment_count(id) do
+  from(p in Post,
+    where: p.id == ^id,
+    left_join: u in assoc(p, :user),
+    left_join: c in assoc(p, :comments),
+    group_by: [p.id, u.id],
+    select: %{
+      post: p,
+      comment_count: count(c.id),
+      user: %{
+        id: u.id,
+        username: u.username,
+        email: u.email
+      }
+    }
+  )
+  |> Repo.one()
+end
+
   defp published_only?(opts), do: Keyword.get(opts, :published_only, false)
 end
