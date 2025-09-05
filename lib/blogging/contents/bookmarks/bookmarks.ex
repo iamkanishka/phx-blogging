@@ -138,4 +138,18 @@ defmodule Blogging.Contents.Bookmarks.Bookmarks do
   def change_bookmark(%Bookmark{} = bookmark, attrs \\ %{}) do
     Bookmark.changeset(bookmark, attrs)
   end
+
+   # Toggle logic
+  def toggle_bookmark(user_id, post_id) do
+    case Repo.get_by(Bookmark, user_id: user_id, post_id: post_id) do
+      nil ->
+        %Bookmark{}
+        |> Bookmark.changeset(%{user_id: user_id, post_id: post_id})
+        |> Repo.insert()
+
+      bookmark ->
+        Repo.delete(bookmark)
+    end
+  end
+
 end
