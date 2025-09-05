@@ -22,27 +22,27 @@ defmodule BloggingWeb.ComponentsLive.PostCard do
                 <!-- Post date -->
                 <span>{@post.post.inserted_at |> Timex.format!("%b %d", :strftime)}</span>
                 <div class="flex items-center space-x-2" title="Like">
-                  <span>👍</span> <span>{@post.reactions["like"]}</span>
+                  <span>👍</span> <span>{@post.reactions["like"] || 0}</span>
                 </div>
 
                 <div class="flex items-center space-x-2" title="Love">
-                  <span>❤️</span> <span>{@post.reactions["love"]}</span>
+                  <span>❤️</span> <span>{@post.reactions["love"] || 0}</span>
                 </div>
 
                 <div class="flex items-center space-x-2" title="Wow">
-                  <span>😮</span> <span>{@post.reactions["wow"]}</span>
+                  <span>😮</span> <span>{@post.reactions["wow"] || 0}</span>
                 </div>
 
                 <div class="flex items-center space-x-2" title="Laugh">
-                  <span>😂</span> <span>{@post.reactions["laugh"]}</span>
+                  <span>😂</span> <span>{@post.reactions["laugh"] || 0}</span>
                 </div>
 
                 <div class="flex items-center space-x-2" title="Sad">
-                  <span>😢</span> <span>{@post.reactions["sad"]}</span>
+                  <span>😢</span> <span>{@post.reactions["sad"] || 0}</span>
                 </div>
 
                 <div class="flex items-center space-x-2" title="Angry">
-                  <span>😡</span> <span>{@post.reactions["angry"]}</span>
+                  <span>😡</span> <span>{@post.reactions["angry"] || 0}</span>
                 </div>
               </div>
 
