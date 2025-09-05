@@ -21,8 +21,6 @@ defmodule Blogging.Contents.Reactions.Reactions do
   @reaction_types ~w(like love wow laugh sad angry)
 
   def count_reactions_and_user_reaction(reactable_type, reactable_id, user_id) do
-    import Ecto.Query
-
     # Count all reactions for given reactable
     counts_query =
       from(r in Blogging.Contents.Reactions.Reaction,
@@ -52,17 +50,21 @@ defmodule Blogging.Contents.Reactions.Reactions do
     %{counts: counts, user_reacted: user_reacted}
   end
 
+
+
   @doc """
   Returns the total reaction counts grouped by type for a given reactable.
   """
   def reaction_counts(reactable_type, reactable_id) do
-    from(r in __MODULE__,
-      where: r.reactable_type == ^reactable_type and r.reactable_id == ^reactable_id,
-      group_by: r.type,
-      select: {r.type, count(r.id)}
-    )
-    |> Repo.all()
-    |> Enum.into(%{})
+    # Count all reactions for given reactable
+    counts_query =
+      from(r in Blogging.Contents.Reactions.Reaction,
+        where: r.reactable_type == ^reactable_type and r.reactable_id == ^reactable_id,
+        group_by: r.type,
+        select: {r.type, count(r.id)}
+      )
+
+    Blogging.Repo.all(counts_query) |> Enum.into(%{})
   end
 
   @doc """
@@ -192,36 +194,34 @@ defmodule Blogging.Contents.Reactions.Reactions do
     |> Repo.delete_all()
   end
 
- def populate_data(user_id, post_id) do
-  Repo.transaction(fn ->
-    {:ok, comment} =
-      %Comment{}
-      |> Comment.changeset(%{content: "First comment", user_id: user_id, post_id: post_id})
-      |> Repo.insert()
+  def populate_data(user_id, post_id) do
+    Repo.transaction(fn ->
+      {:ok, comment} =
+        %Comment{}
+        |> Comment.changeset(%{content: "First comment", user_id: user_id, post_id: post_id})
+        |> Repo.insert()
 
-    {:ok, reply} =
-      %Comment{}
-      |> Comment.changeset(%{
-        content: "Reply to first",
-        user_id: user_id,
-        post_id: post_id,
-        parent_id: comment.id,
-        depth: 1
-      })
-      |> Repo.insert()
+      {:ok, reply} =
+        %Comment{}
+        |> Comment.changeset(%{
+          content: "Reply to first",
+          user_id: user_id,
+          post_id: post_id,
+          parent_id: comment.id,
+          depth: 1
+        })
+        |> Repo.insert()
 
-    {:ok, _reply2} =
-      %Comment{}
-      |> Comment.changeset(%{
-        content: "Reply to reply",
-        user_id: user_id,
-        post_id: post_id,
-        parent_id: reply.id,
-        depth: 2
-      })
-      |> Repo.insert()
-  end)
-end
-
-
+      {:ok, _reply2} =
+        %Comment{}
+        |> Comment.changeset(%{
+          content: "Reply to reply",
+          user_id: user_id,
+          post_id: post_id,
+          parent_id: reply.id,
+          depth: 2
+        })
+        |> Repo.insert()
+    end)
+  end
 end
