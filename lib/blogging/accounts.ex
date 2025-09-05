@@ -7,6 +7,7 @@ defmodule Blogging.Accounts do
   alias Blogging.Repo
 
   alias Blogging.Accounts.{User, UserToken, UserNotifier}
+    alias Blogging.Emails.Emails
 
   ## Database getters
 
@@ -78,7 +79,18 @@ defmodule Blogging.Accounts do
     %User{}
     |> User.registration_changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, user} ->
+        # Send welcome email
+
+        Emails.send_welcome_email_async(user)
+        {:ok, user}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
+
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
