@@ -133,17 +133,7 @@ defmodule BloggingWeb.PostLive.ShowBackup do
   end
 
   @impl true
-  def handle_info(%{event: "new_reaction"}, socket) do
-    reactions =
-      Blogging.Contents.Reactions.Reactions.count_reactions_and_user_reaction(
-        "post",
-       socket.assigns.post.id,
-        socket.assigns.current_user && socket.assigns.current_user.id
-      )
 
-
-    {:noreply, assign(socket, :reactions, reactions)}
-  end
 
   @impl true
   def handle_info(%{event: "new_comment", payload: %{comment: _comment}}, socket) do
