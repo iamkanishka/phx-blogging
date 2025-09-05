@@ -24,24 +24,14 @@ defmodule Blogging.Contents.Posts.PostsBackup do
     |> Repo.insert()
   end
 
-  # Reaction functions
-  def add_reaction(attrs \\ %{}) do
-    %Reaction{}
-    |> Reaction.changeset(attrs)
-    |> Repo.insert()
-  end
+
 
   def remove_reaction(user_id, post_id) do
     Repo.get_by(Reaction, user_id: user_id, post_id: post_id)
     |> Repo.delete()
   end
 
-  def toggle_reaction(user_id, post_id, type) do
-    case Repo.get_by(Reaction, user_id: user_id, post_id: post_id) do
-      nil -> add_reaction(%{user_id: user_id, post_id: post_id, type: type})
-      _reaction -> remove_reaction(user_id, post_id)
-    end
-  end
+
 
   @doc """
   Returns a list of posts with pagination.
