@@ -1,6 +1,5 @@
 defmodule BloggingWeb.FeedLive.Index do
   use BloggingWeb, :live_view
-  import BloggingWeb.Helpers, only: [truncate: 2]
   alias Blogging.Accounts
   alias Blogging.Contents.Feeds.Feeds
 
@@ -15,7 +14,7 @@ defmodule BloggingWeb.FeedLive.Index do
 
     {:ok,
      socket
-     |> assign(:current_user,  current_user)
+     |> assign(:current_user, current_user)
      |> assign(:page_title, "Feed Blogging")
      |> assign(:active_tab, "For you")
      |> assign(:posts, [])
@@ -24,8 +23,6 @@ defmodule BloggingWeb.FeedLive.Index do
      |> assign_bookmark(current_user.id)
      |> assign(:all_topics, (current_user && @all_topics ++ current_user.intrests) || @all_topics)}
   end
-
-
 
   @impl true
   def handle_params(params, url, socket) do
