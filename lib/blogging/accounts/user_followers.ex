@@ -176,7 +176,7 @@ end
   # end
 
     # Check if one user follows another
-  def following?(%User{id: follower_id}, %User{id: followed_id}) do
+  def following?(%User{id: follower_id}, followed_id) do
     from(uf in UserFollower,
       where: uf.follower_id == ^follower_id and uf.followed_id == ^followed_id,
       select: count(uf.id)
