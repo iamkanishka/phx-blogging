@@ -72,7 +72,7 @@
 
 
       <.live_component module={BloggingWeb.PostLive.Components.Reaction} id="reactions-#{@post.post.id}"
-        reactable_id={@post.post.id} reactions={@reactions} reactable_type={"post"} current_user={@current_user} />
+        reactable_id={@post.post.id} reactions={@reactions} post_user={@post.user}  reactable_type={"post"} current_user={@current_user} />
 
 
       <!-- Comments and Bookmark -->
@@ -153,7 +153,7 @@
       <%= for comment <- @comments do %>
 
         <.live_component module={BloggingWeb.PostLive.Components.Comment} id={"comment-#{comment.id}"}
-          post_id={@post.post.id} reactable_type={"comment"} current_user={@current_user} comment={comment} />
+          post_id={@post.post.id} reactable_type={"comment"} post_user={@post.user} current_user={@current_user} comment={comment} />
 
         <% end %>
           <%= if length(@comments) < @total_comments and @comments_has_next do %>
