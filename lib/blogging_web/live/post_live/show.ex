@@ -1,4 +1,7 @@
 defmodule BloggingWeb.PostLive.Show do
+
+  alias Blogging.Notifications.Notifications
+
   alias Blogging.Contents.Comments.Comments
   alias Blogging.Contents.Reactions.Reactions
   alias Blogging.Accounts.EmailSubscriptions
@@ -60,8 +63,6 @@ defmodule BloggingWeb.PostLive.Show do
         false
       end
 
-
-
     is_subscribed =
       if socket.assigns.current_user do
         EmailSubscriptions.subscribed?(post.user.id, socket.assigns.current_user.id)
@@ -99,9 +100,7 @@ defmodule BloggingWeb.PostLive.Show do
      # ✅ store has_next flag
      |> assign(:comments_has_next, has_next)
      |> assign(:comment_changeset, Comment.changeset(%Comment{}, %{"content" => ""}))
-     |> assign(:total_comments, 100)
-
-    }
+     |> assign(:total_comments, 100)}
   end
 
   @impl true
@@ -131,7 +130,18 @@ defmodule BloggingWeb.PostLive.Show do
 
   def handle_event("follow", _params, socket) do
     current_user = socket.assigns.current_user
-    UserFollowers.follow_user(current_user.id, socket.assigns.post.user.id)
+    post_owner = socket.assigns.post.user
+
+    UserFollowers.follow_user(current_user.id, post_owner.id)
+
+    # 🔔 Notify post owner about the follow (skip self-follow)
+    if post_owner.id != current_user.id do
+      Blogging.Notifications.Notifications.notify_follow(
+        post_owner.id,
+        current_user.id,
+        current_user.username
+      )
+    end
 
     {:noreply,
      socket
@@ -140,19 +150,31 @@ defmodule BloggingWeb.PostLive.Show do
 
   def handle_event("unfollow", _params, socket) do
     current_user = socket.assigns.current_user
-    UserFollowers.unfollow_user(current_user.id, socket.assigns.post.user.id)
-    EmailSubscriptions.unsubscribe_user(socket.assigns.post.user.id, current_user.id)
+    post_owner = socket.assigns.post.user
+
+    UserFollowers.unfollow_user(current_user.id, post_owner.id)
+    EmailSubscriptions.unsubscribe_user(post_owner.id, current_user.id)
 
     {:noreply,
      socket
-      |> assign(:is_subscribed, false)
+     |> assign(:is_subscribed, false)
      |> assign(:is_following, false)}
   end
 
   def handle_event("subscribe", _params, socket) do
     current_user = socket.assigns.current_user
+    post_owner = socket.assigns.post.user
 
-    EmailSubscriptions.subscribe_user(socket.assigns.post.user.id, current_user.id)
+    EmailSubscriptions.subscribe_user(post_owner.id, current_user.id)
+
+    # 🔔 Notify post owner about the subscription (skip self-subscribe)
+    if post_owner.id != current_user.id do
+      Blogging.Notifications.Notifications.notify_subscription(
+        post_owner.id,
+        current_user.id,
+        current_user.username
+      )
+    end
 
     {:noreply,
      socket
@@ -161,14 +183,14 @@ defmodule BloggingWeb.PostLive.Show do
 
   def handle_event("unsubscribe", _params, socket) do
     current_user = socket.assigns.current_user
-    EmailSubscriptions.unsubscribe_user(socket.assigns.post.user.id, current_user.id)
+    post_owner = socket.assigns.post.user
+
+    EmailSubscriptions.unsubscribe_user(post_owner.id, current_user.id)
 
     {:noreply,
      socket
      |> assign(:is_subscribed, false)}
   end
-
-
 
   # defp add_comment_or_reply(socket, comment, reply_to \\ nil) do
   #   # IO.inspect(content, label: "Content for Reply")
@@ -206,8 +228,6 @@ defmodule BloggingWeb.PostLive.Show do
   # end
 
   defp add_comment_or_reply(socket, content, reply_to \\ nil) do
-    IO.inspect(content, label: "Content for Reply")
-
     case socket.assigns.current_user do
       nil ->
         {:noreply, put_flash(socket, :error, "You must be logged in to comment")}
@@ -226,6 +246,24 @@ defmodule BloggingWeb.PostLive.Show do
 
             topic = "post:comments:#{socket.assigns.post.post.id}"
             BloggingWeb.Endpoint.broadcast(topic, "new_comment", %{comment: enriched_comment})
+
+            if socket.assigns.post.user.id != socket.assigns.current_user.id do
+              if reply_to == nil do
+                Notifications.notify_comment(
+                  socket.assigns.post.user.id,
+                  socket.assigns.current_user.id,
+                  socket.assigns.post.post.id,
+                  socket.assigns.current_user.username
+                )
+              else
+                Notifications.notify_reply(
+                  socket.assigns.post.user.id,
+                  socket.assigns.current_user.id,
+                  socket.assigns.post.post.id,
+                  socket.assigns.current_user.username
+                )
+              end
+            end
 
             {:noreply,
              socket
@@ -339,8 +377,6 @@ defmodule BloggingWeb.PostLive.Show do
         socket.assigns.current_user && socket.assigns.current_user.id
       )
 
-    IO.inspect(reactions, label: "Post Reactions")
-
     {:noreply, assign(socket, :reactions, reactions)}
   end
 
@@ -386,6 +422,8 @@ defmodule BloggingWeb.PostLive.Show do
         comment_id,
         socket.assigns.current_user && socket.assigns.current_user.id
       )
+
+
 
     updated_comments =
       update_reaction_in_tree(
