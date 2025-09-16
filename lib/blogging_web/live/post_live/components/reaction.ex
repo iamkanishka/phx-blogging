@@ -1,4 +1,5 @@
 defmodule BloggingWeb.PostLive.Components.Reaction do
+  alias Blogging.Notifications.Notifications
   use BloggingWeb, :live_component
   alias Blogging.Contents.Reactions.Reactions
 
@@ -58,13 +59,6 @@ defmodule BloggingWeb.PostLive.Components.Reaction do
         case Reactions.toggle_reaction(attrs) do
           {:ok, _reaction} ->
             # Fetch updated reaction_data ONCE
-            reaction_data =
-              Reactions.count_reactions_and_user_reaction(
-                attrs.reactable_type,
-                attrs.reactable_id,
-                user.id
-              )
-
             {topic, event} =
               case attrs.reactable_type do
                 "post" ->
@@ -75,8 +69,20 @@ defmodule BloggingWeb.PostLive.Components.Reaction do
               end
 
             BloggingWeb.Endpoint.broadcast(topic, event, %{
-              id: attrs.reactable_id
+              id: attrs.reactable_id,
+              type: attrs.reactable_type
             })
+
+            if socket.assigns.post_user.id != socket.assigns.current_user.id do
+              Notifications.notify_post_reaction(
+                socket.assigns.post_user.id,
+                attrs.reactable_type,
+                attrs.reactable_id,
+                socket.assigns.current_user.id,
+                @reaction_types[attrs.type],
+                socket.assigns.current_user.username
+              )
+            end
 
             {:noreply, socket}
 
