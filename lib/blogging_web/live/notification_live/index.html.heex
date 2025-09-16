@@ -1,66 +1,73 @@
-
-
-<.live_component
-  module={BloggingWeb.ComponentsLive.Layout}
-  id="main-layout"
+<.live_component module={BloggingWeb.ComponentsLive.Layout} id="main-layout"
   current_path={@current_path}
-  user_name={@current_user.username}
- 
->
-  
+  user_name={@current_user.username}>
 
+  <div class="container mx-auto max-w-7xl py-8">
+    <.header>
+      Notifications
+    </.header>
 
-<div class="container mx-auto max-w-7xl  py-8">
-  <.header>
-    Notifications
- 
-  </.header>
+    <div class="flex min-h-screen bg-white text-gray-900 font-sans">
+      <!-- Main Content -->
+      <main class="flex-1 mx-auto py-6">
+        <div class="space-y-6">
+          <%= for item <- @notifications do %>
+            <div class="flex items-start space-x-3">
+              
+              <!-- Avatar (clickable → profile/:notifier_id) -->
+              <div class="flex-shrink-0">
+                <a href={"/profile/#{item.data["notifier_id"]}"}>
+                  <div class="w-10 h-10 rounded-full bg-gray-300 text-white font-semibold 
+                              flex items-center justify-center uppercase hover:bg-gray-400">
+                    <%= String.first(item.data["name"]) |> String.upcase() %>
+                  </div>
+                </a>
+              </div>
 
-<!-- lib/blogging_web/templates/page/index.html.heex -->
-<div class="flex min-h-screen bg-white text-gray-900 font-sans">
-  <!-- Main Content -->
-  <main class="flex-1  mx-auto py-6">
+              <!-- Content -->
+              <div>
+                <p class="text-sm text-gray-800">
+                  <span class="font-semibold">
+                    <a href={"/profile/#{item.data["notifier_id"]}"} class="hover:underline">
+                      <%= item.data["name"] %>
+                    </a>
+                  </span>
 
-    <div class="space-y-6">
-    <%= for item <- @activities do %>
-      <div class="flex items-start space-x-3">
-        <!-- Avatar -->
-        <div class="flex-shrink-0">
-         
-            <div class="w-10 h-10 rounded-full bg-gray-300 text-white font-semibold flex items-center justify-center uppercase">
-              <%= String.first(item.name)|> String.upcase() %>
+                  <!-- Notification action (clickable) -->
+                  <%= if item.data["post_id"] do %>
+                    <a href={"/post/#{item.data["post_id"]}"} class="hover:underline">
+                      <%= raw(item.message) %>
+                    </a>
+                  <% else %>
+                    <%= case item.type do %>
+                      <% :subscription -> %>
+                        <a href={"/subscription/#{item.user_id}"} class="hover:underline">
+                          <%= raw(item.message) %>
+                        </a>
+                      <% :follow -> %>
+                        <a href={"/profile/#{item.data["notifier_id"]}"} class="hover:underline">
+                          <%= raw(item.message) %>
+                        </a>
+                      <% _ -> %>
+                        <span><%= raw(item.message) %></span>
+                    <% end %>
+                  <% end %>
+                </p>
+
+                <!-- Timestamp -->
+                <p class="text-xs text-gray-500 mt-1">
+                  <%= item.inserted_at %>
+                </p>
+              </div>
             </div>
-         
+          <% end %>
         </div>
+      </main>
 
-        <!-- Content -->
-        <div>
-          <p class="text-sm text-gray-800">
-            <span class="font-semibold"><%= item.name %></span>
-            <%= raw item.action %>
-          </p>
-          <p class="text-xs text-gray-500 mt-1">
-            <%= item.timestamp %>
-          </p>
-        </div>
-      </div>
-    <% end %>
+      <!-- Sidebar -->
+      <.live_component module={BloggingWeb.ComponentsLive.SidebarBookmarksTopics}
+        id="sidebar-bookmarks-topics"
+        current_user_id={@current_user.id} />
+    </div>
   </div>
- 
-  </main>
-
-  <!-- Sidebar -->
-  
-  <.live_component
-  module={BloggingWeb.ComponentsLive.SidebarBookmarksTopics}
-  id="sidebar-bookmarks-topics"
-  current_user_id={@current_user.id}
-  >
-</.live_component>
-</div>
-
-
-
-</div>
-
 </.live_component>
