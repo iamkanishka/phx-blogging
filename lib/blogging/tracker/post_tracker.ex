@@ -19,9 +19,7 @@ defmodule Blogging.Tracker.PostTracker do
     GenServer.call(via_tuple(post_id), {:add_comment, comment_params})
   end
 
-  def add_reaction(post_id, reaction_params) do
-    GenServer.call(via_tuple(post_id), {:add_reaction, reaction_params})
-  end
+
 
   # Server Callbacks
   @impl true
@@ -43,19 +41,6 @@ defmodule Blogging.Tracker.PostTracker do
         Realtime.broadcast_comment(state.post.id, comment)
         updated_post = Posts.get_post(state.post.id)
         {:reply, {:ok, comment}, %{state | post: updated_post}}
-
-      {:error, changeset} ->
-        {:reply, {:error, changeset}, state}
-    end
-  end
-
-  @impl true
-  def handle_call({:add_reaction, reaction_params}, _from, state) do
-    case Posts.add_reaction(reaction_params) do
-      {:ok, reaction} ->
-        Realtime.broadcast_reaction(state.post.id, reaction)
-        updated_post = Posts.get_post(state.post.id)
-        {:reply, {:ok, reaction}, %{state | post: updated_post}}
 
       {:error, changeset} ->
         {:reply, {:error, changeset}, state}
