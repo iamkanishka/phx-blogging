@@ -6,7 +6,7 @@ defmodule Blogging.Repo.Migrations.CreateNotifications do
       add :id, :binary_id, primary_key: true
       add :type, :string, null: false
       add :data, :map, null: false
-      add :read_at, :naive_datetime
+       add :is_read, :boolean, default: false
       add :message, :string
 
       add :user_id, references(:users, type: :binary_id, on_delete: :delete_all), null: false
