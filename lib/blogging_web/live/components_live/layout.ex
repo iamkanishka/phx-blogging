@@ -16,8 +16,17 @@ defmodule BloggingWeb.ComponentsLive.Layout do
               Posts
             </.link>
 
-            <.link href={~p"/notifications"} class={nav_link_classes(@current_path, "/notifications")}>
-              Notifications
+            <.link
+              phx-click="clear_notifications"
+              phx-target={@myself}
+              class={nav_link_classes(@current_path, "/notifications")}
+            >
+              <span class="relative">
+                Notifications
+                <%= if @has_new_notifications do %>
+                  <span class="absolute -top-1 -right-2 block h-2 w-2 rounded-full bg-red-500"></span>
+                <% end %>
+              </span>
             </.link>
 
             <.link href={~p"/bookmarks"} class={nav_link_classes(@current_path, "/bookmarks")}>
@@ -38,7 +47,7 @@ defmodule BloggingWeb.ComponentsLive.Layout do
               <.icon name="hero-cog-6-tooth" class="h-6 w-6 text-zinc-900 hover:text-zinc-700" />
             </.link>
 
-            <.link href={~p"/users/logout"}   method="delete" class="text-zinc-900 hover:text-zinc-700">
+            <.link href={~p"/users/logout"} method="delete" class="text-zinc-900 hover:text-zinc-700">
               Logout
             </.link>
           </div>
@@ -56,7 +65,13 @@ defmodule BloggingWeb.ComponentsLive.Layout do
 
   @impl true
   def update(assigns, socket) do
-    {:ok, assign(socket, assigns)}
+    {:ok,
+      socket
+      |> assign(assigns)
+      |> assign(:has_new_notifications, false)
+
+
+  }
   end
 
   defp nav_link_classes(current_path, path) do
@@ -74,5 +89,18 @@ defmodule BloggingWeb.ComponentsLive.Layout do
         "text-zinc-900 hover:text-zinc-700"
       end
     ]
+  end
+
+  @impl true
+  def handle_info({:new_notification, _notification}, socket) do
+    {:noreply, assign(socket, :has_new_notifications, true)}
+  end
+
+  @impl true
+  def handle_event("clear_notifications", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:has_new_notifications, false)
+     |> push_navigate(to: ~p"/notifications")}
   end
 end
