@@ -11,7 +11,7 @@ defmodule Blogging.Notifications.Notification do
   schema "notifications" do
     field :type, Ecto.Enum, values: @types
     field :data, :map
-    field :read_at, :naive_datetime
+    field :is_read, :boolean, default: false
     field :message, :string
 
     belongs_to :user, Blogging.Accounts.User
@@ -21,7 +21,7 @@ defmodule Blogging.Notifications.Notification do
 
   def changeset(notification, attrs) do
     notification
-    |> cast(attrs, [:type, :data, :message,  :user_id, :read_at])
+    |> cast(attrs, [:type, :data, :message,  :user_id, :is_read])
     |> validate_required([:type, :message, :data, :user_id])
   end
 end
