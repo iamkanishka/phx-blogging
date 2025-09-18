@@ -27,6 +27,8 @@ defmodule BloggingWeb.BookmarkLive.Index do
      |> assign(:user_id, current_user.id)
      |> assign(:current_user, current_user)
      |> assign(:bookmarks, bookmarks)
+           |> assign(:has_new_notifications, false)
+
      |> assign(:loaded_page, page)
      |> assign(:total_pages, total_pages)}
   end
@@ -56,4 +58,11 @@ defmodule BloggingWeb.BookmarkLive.Index do
       {:noreply, socket}
     end
   end
+
+  @impl true
+@impl true
+def handle_info(%{event: "render_new_notification_badge", payload: %{notification: _notification}}, socket) do
+  IO.inspect("Received new notification badge")
+  {:noreply, assign(socket, :has_new_notifications, true)}
+end
 end
