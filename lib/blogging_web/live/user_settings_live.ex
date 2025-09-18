@@ -12,6 +12,7 @@ defmodule BloggingWeb.UserSettingsLive do
       id="main-layout"
       current_path={@current_path}
       user_name={@current_user.username}
+      has_new_notifications={@has_new_notifications}
     >
       <div class="space-y-12 divide-y">
 
@@ -149,6 +150,8 @@ defmodule BloggingWeb.UserSettingsLive do
       |> assign(:password_form, to_form(Accounts.change_user_password(user)))
       |> assign(:profile_form, to_form(User.change_user_profile(user)))
       |> assign(:trigger_submit, false)
+       |> assign(:has_new_notifications, false)
+
 
     {:ok, socket}
   end
@@ -157,7 +160,6 @@ defmodule BloggingWeb.UserSettingsLive do
   def handle_params(_unsigned_params, url, socket) do
     {:noreply, assign(socket, current_path: URI.parse(url).path)}
   end
-
 
   # Email
   @impl true
@@ -239,4 +241,10 @@ defmodule BloggingWeb.UserSettingsLive do
         {:noreply, assign(socket, profile_form: to_form(changeset))}
     end
   end
+
+  @impl true
+  def handle_info(%{event: "render_new_notification_badge", payload: %{notification: _notification}}, socket) do
+  IO.inspect("Received new notification badge")
+  {:noreply, assign(socket, :has_new_notifications, true)}
+end
 end
