@@ -38,6 +38,7 @@ defmodule BloggingWeb.PostLive.CreateEdit do
      |> assign(:page_title, "New Post")
      |> assign(:post, post)
      |> assign(:current_path, current_path)
+      |> assign(:has_new_notifications, false)
 
      |> assign(:action, :new)
      |> assign(:user_id, post.user_id)
@@ -49,6 +50,11 @@ defmodule BloggingWeb.PostLive.CreateEdit do
     {:noreply, push_navigate(socket, to: "/posts")}
   end
 
+  def handle_info(%{event: "render_new_notification_badge", payload: %{notification: _notification}}, socket) do
+  IO.inspect("Received new notification badge")
+  {:noreply, assign(socket, :has_new_notifications, true)}
+end
+
   @impl true
   def handle_event("quill-change", %{"html" => html, "text" => text}, socket) do
      # Update the changeset with the new HTML content
@@ -59,4 +65,7 @@ defmodule BloggingWeb.PostLive.CreateEdit do
 
     {:noreply, assign(socket, html_content: html)}
   end
+
+
+
 end
