@@ -88,11 +88,16 @@ defmodule Blogging.Notifications.Notifications do
   end
 
   defp broadcast_new_notification(notification) do
+      topic = "notifications:#{notification.user_id}"
+       badge_topic = "notifications_badge:#{notification.user_id}"
     BloggingWeb.Endpoint.broadcast(
-      "notifications:#{notification.user_id}",
+       topic,
       "new_notification",
       %{notification: notification}
     )
+
+    BloggingWeb.Endpoint.broadcast(badge_topic, "render_new_notification_badge", %{notification: notification})
+
   end
 
   defp build_message(:comment, data) do
