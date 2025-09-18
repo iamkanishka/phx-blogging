@@ -5,7 +5,6 @@ defmodule BloggingWeb.ProfileLive.Index do
 
   alias Blogging.Contents.Posts.{Posts}
 
-
   @impl true
   def mount(_params, session, socket) do
     current_user = Accounts.get_user_by_session_token(session["user_token"])
@@ -16,17 +15,18 @@ defmodule BloggingWeb.ProfileLive.Index do
      |> assign(:current_user, current_user)
      |> assign(:current_user_id, current_user.id)
      |> assign(:page_title, "Posts")
+     |> assign(:has_new_notifications, false)
      |> assign(:pagination, nil)}
   end
 
   @impl true
   def handle_params(params, url, socket) do
-     current_path = URI.parse(url).path
+    current_path = URI.parse(url).path
 
     {:noreply,
      socket
      |> assign(:current_path, current_path)
-     |>  apply_action(socket.assigns.live_action, params)}
+     |> apply_action(socket.assigns.live_action, params)}
   end
 
   defp apply_action(socket, :index, _params) do
@@ -45,4 +45,10 @@ defmodule BloggingWeb.ProfileLive.Index do
   defp list_posts(user_id) do
     Posts.list_posts_by_user(user_id, page: 1, page_size: 10)
   end
+
+  @impl true
+ def handle_info(%{event: "render_new_notification_badge", payload: %{notification: _notification}}, socket) do
+  IO.inspect("Received new notification badge")
+  {:noreply, assign(socket, :has_new_notifications, true)}
+end
 end
