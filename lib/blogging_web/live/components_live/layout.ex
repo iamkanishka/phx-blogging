@@ -24,7 +24,8 @@ defmodule BloggingWeb.ComponentsLive.Layout do
               <span class="relative">
                 Notifications
                 <%= if @has_new_notifications do %>
-                  <span class="absolute -top-1 -right-2 block h-2 w-2 rounded-full bg-red-500"></span>
+                  <span class="absolute -top-1 -right-2 block h-2 w-2 rounded-full bg-green-800">
+                  </span>
                 <% end %>
               </span>
             </.link>
@@ -66,12 +67,8 @@ defmodule BloggingWeb.ComponentsLive.Layout do
   @impl true
   def update(assigns, socket) do
     {:ok,
-      socket
-      |> assign(assigns)
-      |> assign(:has_new_notifications, false)
-
-
-  }
+     socket
+     |> assign(assigns) }
   end
 
   defp nav_link_classes(current_path, path) do
@@ -91,10 +88,7 @@ defmodule BloggingWeb.ComponentsLive.Layout do
     ]
   end
 
-  @impl true
-  def handle_info({:new_notification, _notification}, socket) do
-    {:noreply, assign(socket, :has_new_notifications, true)}
-  end
+
 
   @impl true
   def handle_event("clear_notifications", _params, socket) do
