@@ -23,6 +23,8 @@ defmodule BloggingWeb.PostLive.Show do
       BloggingWeb.Endpoint.subscribe("post:reactions:#{post_id}")
       BloggingWeb.Endpoint.subscribe("post:comments:#{post_id}")
       BloggingWeb.Endpoint.subscribe("post:comments:reactions:#{post_id}")
+      BloggingWeb.Endpoint.subscribe("notifications_badge:#{current_user.id}")
+
     end
 
     socket =
@@ -36,6 +38,8 @@ defmodule BloggingWeb.PostLive.Show do
       |> assign(:reactions, %{})
       |> assign(:comments, [])
       |> assign_form(comment_changeset)
+      |> assign(:has_new_notifications, false)
+
       |> assign(:reply_to, nil)
       |> assign(:comment_offset, 0)
       |> assign(:comments_per_load, 5)
@@ -479,6 +483,11 @@ defmodule BloggingWeb.PostLive.Show do
     end
   end
 
+   def handle_info(%{event: "render_new_notification_badge", payload: %{notification: _notification}}, socket) do
+  IO.inspect("Received new notification badge")
+  {:noreply, assign(socket, :has_new_notifications, true)}
+end
+
   def handle_info(%{event: "delete_comment", payload: %{comment_id: id}}, socket) do
     updated_comments = remove_comment_from_tree(socket.assigns.comments, id)
     {:noreply, assign(socket, :comments, updated_comments)}
@@ -627,4 +636,6 @@ defmodule BloggingWeb.PostLive.Show do
 
     :ok
   end
+
+
 end
