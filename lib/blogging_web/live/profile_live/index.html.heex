@@ -1,56 +1,44 @@
+<.live_component module={BloggingWeb.ComponentsLive.Layout} id="main-layout" current_path={@current_path}
+  user_name={@current_user.username} has_new_notifications={@has_new_notifications}>
 
 
-<.live_component
-  module={BloggingWeb.ComponentsLive.Layout}
-  id="main-layout"
-  current_path={@current_path}
-  user_name={@current_user.username}
-  
- 
->
-  
+
+  <div class="container mx-auto max-w-7xl py-4">
+    <.header>
+      <span class="text-5xl font-semibold text-gray-900">
+        {@current_user.username}
+      </span>
+    </.header>
+
+    <!-- lib/blogging_web/templates/page/index.html.heex -->
+    <div class="flex min-h-screen bg-white text-gray-900 font-sans">
+      <!-- Main Content -->
+      <main class="flex-1  mx-auto ">
+
+        <!-- Articles -->
+        <div class="space-y-10 mt-6">
+          <%= for {post, index} <- Enum.with_index(@posts) do %>
 
 
-<div class="container mx-auto max-w-7xl py-4">
-  <.header >
-    <span class="text-5xl font-semibold text-gray-900">
-           {@current_user.username}
-       </span>
-  </.header>
-
-<!-- lib/blogging_web/templates/page/index.html.heex -->
-<div class="flex min-h-screen bg-white text-gray-900 font-sans">
-  <!-- Main Content -->
-  <main class="flex-1  mx-auto ">
-  
-    <!-- Articles -->
-    <div class="space-y-10 mt-6">
-  <%= for {post, index} <- Enum.with_index(@posts) do %>
+            <.live_component module={BloggingWeb.ComponentsLive.PostCard} id={"post-topics" <> Integer.to_string(index)}
+              post={post}
+              >
+            </.live_component>
 
 
- <.live_component
-  module={BloggingWeb.ComponentsLive.PostCard}
-  id={"post-topics" <> Integer.to_string(index)}
-  post={post}
-  >
-</.live_component>
+            <% end %>
 
-   
-    <% end %>
+        </div>
+      </main>
+
+      <!-- Sidebar -->
+      <.live_component module={BloggingWeb.ComponentsLive.SidebarProfile} id={:sidebar_profile}
+        current_user={@current_user}>
+      </.live_component>
 
     </div>
-  </main>
-
-  <!-- Sidebar -->
- <.live_component
-  module={BloggingWeb.ComponentsLive.SidebarProfile}
-  id={:sidebar_profile}
-  current_user={@current_user}  >
-   </.live_component>
-
-</div>
 
 
 
-</div>
+  </div>
 </.live_component>
