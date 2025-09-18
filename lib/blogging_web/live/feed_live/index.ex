@@ -20,6 +20,7 @@ defmodule BloggingWeb.FeedLive.Index do
      |> assign(:posts, [])
      |> assign(:bookmarks, [])
      |> assign(:pagination, nil)
+     |> assign(:has_new_notifications, false)
      |> assign_bookmark(current_user.id)
      |> assign(:all_topics, (current_user && @all_topics ++ current_user.intrests) || @all_topics)}
   end
@@ -29,6 +30,7 @@ defmodule BloggingWeb.FeedLive.Index do
     current_user = socket.assigns.current_user
 
     current_path = URI.parse(url).path
+
     page =
       case params do
         %{"feed" => "following"} ->
@@ -98,5 +100,15 @@ defmodule BloggingWeb.FeedLive.Index do
     bookmarks = Blogging.Contents.Bookmarks.Bookmarks.list_recent_bookmarks(user_id)
 
     assign(socket, :bookmarks, bookmarks)
+  end
+
+  @impl true
+
+  def handle_info(
+        %{event: "render_new_notification_badge", payload: %{notification: _notification}},
+        socket
+      ) do
+    IO.inspect("Received new notification badge")
+    {:noreply, assign(socket, :has_new_notifications, true)}
   end
 end
