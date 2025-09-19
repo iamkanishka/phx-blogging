@@ -9,6 +9,9 @@ defmodule BloggingWeb.NotificationLive.Index do
     current_user = Accounts.get_user_by_session_token(session["user_token"])
 
     if connected?(socket) do
+
+      BloggingWeb.Endpoint.subscribe("notifications_badge:#{current_user.id}")
+
       BloggingWeb.Endpoint.subscribe("notifications:#{current_user.id}")
     end
 
@@ -23,6 +26,7 @@ defmodule BloggingWeb.NotificationLive.Index do
      |> assign(:current_user_id, current_user.id)
      |> assign(:current_user, current_user)
      |> assign(:notifications, notifications)
+     |> assign(:has_new_notifications, false)
      |> assign(:page_title, "Posts")
      |> assign(:pagination, nil)}
   end
@@ -54,5 +58,14 @@ defmodule BloggingWeb.NotificationLive.Index do
     {:noreply,
      socket
      |> assign(:notifications, [notification | socket.assigns.notifications])}
+  end
+
+  @impl true
+  def handle_info(
+        %{event: "render_new_notification_badge", payload: %{notification: _notification}},
+        socket
+      ) do
+    IO.inspect("Received new notification badge")
+    {:noreply, assign(socket, :has_new_notifications, true)}
   end
 end
