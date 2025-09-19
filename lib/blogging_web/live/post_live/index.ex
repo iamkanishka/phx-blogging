@@ -8,6 +8,10 @@ defmodule BloggingWeb.PostLive.Index do
   def mount(_params, session, socket) do
     current_user = Accounts.get_user_by_session_token(session["user_token"])
 
+    if connected?(socket) do
+      BloggingWeb.Endpoint.subscribe("notifications_badge:#{current_user.id}")
+    end
+
     {:ok,
      socket
      |> assign(:posts, list_posts(current_user.id))
