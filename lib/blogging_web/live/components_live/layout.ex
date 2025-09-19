@@ -40,6 +40,13 @@ defmodule BloggingWeb.ComponentsLive.Layout do
           </div>
 
           <div class="flex items-center gap-4">
+           <.link href={~p"/posts/new"}  class="text-zinc-900 hover:text-zinc-700  font-semibold leading-6 ">
+               <.icon name="hero-pencil-square" class="h-5 w-5" />
+              Write a post
+            </.link>
+
+
+
             <.link href={~p"/profile"}>
               {@user_name}
             </.link>
