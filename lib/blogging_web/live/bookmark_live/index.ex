@@ -11,6 +11,10 @@ defmodule BloggingWeb.BookmarkLive.Index do
   def mount(_params, session, socket) do
     current_user = Accounts.get_user_by_session_token(session["user_token"])
 
+    if connected?(socket) do
+      BloggingWeb.Endpoint.subscribe("notifications_badge:#{current_user.id}")
+    end
+
     page = 1
     total_count = Bookmarks.count_user_bookmarks(current_user.id)
 
@@ -22,13 +26,13 @@ defmodule BloggingWeb.BookmarkLive.Index do
       end
 
     bookmarks = Bookmarks.list_user_bookmarks(current_user.id, page, @per_page)
+
     {:ok,
      socket
      |> assign(:user_id, current_user.id)
      |> assign(:current_user, current_user)
      |> assign(:bookmarks, bookmarks)
-           |> assign(:has_new_notifications, false)
-
+     |> assign(:has_new_notifications, false)
      |> assign(:loaded_page, page)
      |> assign(:total_pages, total_pages)}
   end
@@ -60,9 +64,12 @@ defmodule BloggingWeb.BookmarkLive.Index do
   end
 
   @impl true
-@impl true
-def handle_info(%{event: "render_new_notification_badge", payload: %{notification: _notification}}, socket) do
-  IO.inspect("Received new notification badge")
-  {:noreply, assign(socket, :has_new_notifications, true)}
-end
+  @impl true
+  def handle_info(
+        %{event: "render_new_notification_badge", payload: %{notification: _notification}},
+        socket
+      ) do
+    IO.inspect("Received new notification badge")
+    {:noreply, assign(socket, :has_new_notifications, true)}
+  end
 end
