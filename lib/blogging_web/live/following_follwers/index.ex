@@ -9,6 +9,10 @@ defmodule BloggingWeb.FollowingFollwers.Index do
   def mount(_params, session, socket) do
     current_user = Accounts.get_user_by_session_token(session["user_token"])
 
+     if connected?(socket) do
+       BloggingWeb.Endpoint.subscribe("notifications_badge:#{current_user.id}")
+      end
+
     following_users =
       UserFollowers.list_followers_with_subscription(current_user.id, current_user.id)
 
