@@ -7,9 +7,15 @@ defmodule BloggingWeb.PostLive.CreateEdit do
 
   @impl true
   def mount(_params, session, socket) do
-    user = Accounts.get_user_by_session_token(session["user_token"])
+    current_user = Accounts.get_user_by_session_token(session["user_token"])
 
-    {:ok, assign(socket, user: user)}
+     if connected?(socket) do
+
+      BloggingWeb.Endpoint.subscribe("notifications_badge:#{current_user.id}")
+
+    end
+
+    {:ok, assign(socket, user: current_user)}
   end
 
   @impl true
@@ -17,6 +23,8 @@ defmodule BloggingWeb.PostLive.CreateEdit do
     post = Posts.get_post(id)
 
     current_path = URI.parse(url).path
+
+
 
     {:noreply,
      socket
